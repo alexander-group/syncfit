@@ -1,0 +1,43 @@
+[build-system]
+requires = ['setuptools>=42']
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synchrotron_modeler"
+authors = [{name = "Noah Franz", email = "nfranz@arizona.edu"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+dynamic = ["version"]
+
+requires-python = ">=3.9"
+
+classifiers = [
+  "License :: OSI Approved :: BSD License",
+  "Topic :: Scientific/Engineering",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Development Status :: 1 - Planning"
+]
+
+dependencies = [
+  "numpy>=1.20",
+  "astropy>=5.2",
+  "pyArango",
+  "flask"
+  ]
+
+[project.urls]
+Home = "https://github.com/astro-otter"
+
+[tool.setuptools.packages.find]
+where = ['.']
+
+[tool.setuptools.dynamic]
+version = {attr = 'otter._version.__version__'}
