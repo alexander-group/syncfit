@@ -34,7 +34,7 @@ def SED(nu, p, log_F_nu, log_nu_a, log_nu_m):
     b3 = (1-p)/2
     
     s1 = 1.06
-    s2 = 1.84-0.4*p
+    s2 = 1.76-0.38*p
     
     F_nu = 10**log_F_nu
     nu_m = 10**log_nu_m
