@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import emcee
 
-def do_emcee(theta_init, nu, F_muJy, F_error, toimport='single_break_model', niter=2000, day=None, plot=False):
+def do_emcee(theta_init, nu, F_muJy, F_error, model_name='b5', niter=2000, day=None, plot=False):
 
     """
     nu - frequency in GHz
@@ -14,10 +14,11 @@ def do_emcee(theta_init, nu, F_muJy, F_error, toimport='single_break_model', nit
     F_error - flux error in micro janskies
     day: day of observation (string)
     theta_init: array of initial guess 
+    model_name: Shortened model name to use. Options are b5, b4b5, b4b5b3, b1b2, b1b2_b3b4_weighted
     """
         
     # import the relevant module
-    model = importlib.import_module(f'syncfit.{toimport}')
+    model = importlib.import_module(f'syncfit.{model_name}_model')
 
     ### Fill in initial guesses and number of parameters  
     theta_init = np.array(theta_init)
@@ -61,7 +62,7 @@ def do_emcee(theta_init, nu, F_muJy, F_error, toimport='single_break_model', nit
         ax = plt.subplot(111)
         v = len(flat_samples.transpose()) - 1000 # only plot the last thousange
         for i in range(len(flat_samples.transpose()[0][v:])):
-            ax.plot(nu_plot, model.SED(nu_plot, emcee_args['p'],
+            ax.plot(nu_plot, model.SED(nu_plot,
                                        *[val[v:][i] for val in flat_samples.transpose()]
                                        ),
                     '-', color='k', lw = 0.5, alpha = 0.1)

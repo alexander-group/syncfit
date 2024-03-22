@@ -60,8 +60,8 @@ def SED(nu, p, log_F_nu, log_nu_a, log_nu_m):
     F2 = F_nu * term1 * term2
     
     ### Spectrum 1 and 2 weighted
-    w1 = (nu_m,nu_a)**2
-    w2 = (nu_a,nu_m)**2
+    w1 = (nu_m/nu_a)**2
+    w2 = (nu_a/nu_m)**2
     
     F = (w1*F1+w2*F2) / (w1+w2)
     
