@@ -28,7 +28,7 @@ def unpack_util(theta_init, nu, F_muJy, F_error):
     return get_pos(theta_init), get_labels(), get_emcee_args(nu, F_muJy, F_error)
 
 # the model, must be named SED!!!
-def SED(nu, p, F_nu, nu_a, nu_m, nu_c):
+def SED(nu, p, log_F_nu, log_nu_a, log_nu_m, log_nu_c):
     b1 = 2
     b2 = 5/2
     b3 = (1-p)/2
