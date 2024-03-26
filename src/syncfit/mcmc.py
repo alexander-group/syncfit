@@ -6,12 +6,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import emcee
 
-def do_emcee(theta_init, nu, F_muJy, F_error, model_name='b5', niter=2000, day=None, plot=False):
+def do_emcee(theta_init, nu, F_muJy, F_error, model_name='b5', niter=2000,
+             nwalkers=100, fix_p=None, day=None, plot=False):
 
     """
     nu - frequency in GHz
     F_muJy - flux in micro janskies
     F_error - flux error in micro janskies
+    fix_p: Will fix the p value to whatever you give, do not provide p in theta_init
+             if this is the case!
     day: day of observation (string)
     theta_init: array of initial guess 
     model_name: Shortened model name to use. Options are b5, b4b5, b4b5b3, b1b2, b1b2_b3b4_weighted
@@ -28,7 +31,8 @@ def do_emcee(theta_init, nu, F_muJy, F_error, model_name='b5', niter=2000, day=N
     ndim = len(theta_init)
 
     # get some values from the import
-    pos, labels, emcee_args = model.unpack_util(theta_init, nu, F_muJy, F_error)
+    pos, labels, emcee_args = model.unpack_util(theta_init, nu, F_muJy, F_error,
+                                                nwalkers, p=fix_p)
     
     # setup and run the MCMC
     nwalkers, ndim = pos.shape
@@ -72,7 +76,12 @@ def do_emcee(theta_init, nu, F_muJy, F_error, model_name='b5', niter=2000, day=N
         fig = plt.figure(figsize = (4,4))
         ax = plt.subplot(111)
         for val in toplot:
-            ax.plot(nu_plot, model.SED(nu_plot, *val),
+            if 'p' in emcee_args:
+                res = model.SED(nu_plot, emcee_args['p'], *val)
+            else:
+                res = model.SED(nu_plot, *val)
+                
+            ax.plot(nu_plot, res,
                     '-', color='k', lw = 0.5, alpha = 0.1)
 
         ax.errorbar(emcee_args['nu'], emcee_args['F'], fmt='o', markeredgecolor='black',
