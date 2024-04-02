@@ -13,7 +13,7 @@ pip install -e .
 A simple example if you have arrays of flux, flux error, and a central frequency in GHz
 ```
 theta_init = [0,0]
-chain = syncphot.mcmc.do_emcee(theta_init, nu, F, Ferr)
+chain = syncphot.fitter.do_emcee(theta_init, nu, F, Ferr)
 ```
 
 # Development instructions
