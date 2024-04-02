@@ -3,7 +3,7 @@ Some useful plotting code from the outputs of the mcmc
 '''
 
 import matplotlib.pyplot as plt
-from .analysis import *
+from .util import *
 
 def plot_chains(sampler, labels, fig=None, axes=None):
     '''

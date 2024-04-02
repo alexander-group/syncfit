@@ -1,2 +1,3 @@
 from .plotter import *
-from .analysis import *
+from .util import *
+from .equipartition import *
