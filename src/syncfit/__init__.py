@@ -1,3 +1,2 @@
-from ._version import __version__
-
-from . import fitter, analysis
+from .mcmc import do_emcee
+from . import models, analysis

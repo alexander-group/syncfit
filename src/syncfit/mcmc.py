@@ -5,9 +5,11 @@ import importlib
 import numpy as np
 import matplotlib.pyplot as plt
 import emcee
-from ..analysis import *
+from .analysis import *
+from .models.b5_model import B5
+from .models.base_model import BaseModel
 
-def do_emcee(theta_init, nu, F_muJy, F_error, model_name='b5', niter=2000,
+def do_emcee(theta_init, nu, F_muJy, F_error, model=B5, niter=2000,
              nwalkers=100, fix_p=None, day=None, plot=False):
 
     """
@@ -18,15 +20,16 @@ def do_emcee(theta_init, nu, F_muJy, F_error, model_name='b5', niter=2000,
              if this is the case!
     day: day of observation (string)
     theta_init: array of initial guess 
-    model_name: Shortened model name to use. Options are b5, b4b5, b4b5b3, b1b2, b1b2_b3b4_weighted
+    model: Model class to use from syncfit.fitter.models, must be a subclass of BaseModel!
 
     Returns:
     flat_samples, log_prob
     """
-        
-    # import the relevant module
-    model = importlib.import_module(f'syncfit.fitter.models.{model_name}_model')
-
+    
+    # Check that the model subclasses BaseModel
+    # if issubclass(model, BaseModel):
+    #    raise ValueError('Input model is not a subclass of BaseModel!!')
+    
     ### Fill in initial guesses and number of parameters  
     theta_init = np.array(theta_init)
     ndim = len(theta_init)
