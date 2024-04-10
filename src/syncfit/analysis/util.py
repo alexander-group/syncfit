@@ -21,12 +21,12 @@ def get_ndim(sampler):
     flat_samples, _ = extract_output(sampler)
     return len(flat_samples[0])
 
-def get_bounds(sampler, labels, toprint=False):
+def get_bounds(sampler, labels, toprint=False, **kwargs):
     '''
     Extract the median, upper, and lower limits from the flat_samples chain
     '''
     
-    flat_samples, _ = extract_output(sampler)
+    flat_samples, _ = extract_output(sampler, **kwargs)
     ndim = get_ndim(sampler)
     
     medians, upper, lower = [], [], []
