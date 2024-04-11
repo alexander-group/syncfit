@@ -10,16 +10,15 @@ class BaseModel(ABC):
 
     # Write some getters for things that are model specific
     # THESE WILL BE THE SAME ACROSS ALL MODELS!
-    def get_pos(theta_init, nwalkers, p=None):
+    def get_pos(theta_init, nwalkers):
         ndim = len(theta_init)
+        if not isinstance(theta_init, np.ndarray):
+            theta_init = np.array(theta_init)
 
-        if p is None:
-            pos = np.array([np.array(theta_init) + [0.1*t for t in theta_init
-                                                    ]*np.random.randn(ndim) for i in range(nwalkers)])
-        else:
-            pos = np.array([np.array(theta_init) + [0.1*t for t in theta_init
-                                                    ]*np.random.randn(ndim) for i in range(nwalkers)])
-
+        diff = 0.01 # The amount to offset by, so 1 will give random pos between -1 and 1
+        pos_offset = np.random.rand(nwalkers, ndim)*diff*2 - diff # *2 - 1 to put between -1 and 1 instead of 0 and 1
+        pos = theta_init + pos_offset # this will offset the initial positions by pos_offset
+        
         return pos
     
     def get_emcee_args(nu, F_muJy, F_error, p=None):
@@ -35,7 +34,7 @@ class BaseModel(ABC):
     # package those up for easy getting in do_emcee
     @classmethod
     def unpack_util(cls, theta_init, nu, F_muJy, F_error, nwalkers, p=None):
-        return (cls.get_pos(theta_init,nwalkers,p=p),
+        return (cls.get_pos(theta_init,nwalkers),
                 cls.get_labels(p=p),
                 cls.get_emcee_args(nu, F_muJy, F_error, p))
 
