@@ -5,6 +5,11 @@ import numpy as np
 from .base_model import BaseModel
 
 class B4B5B3(BaseModel):
+    '''
+    Three-break model using the self-absorption break (nu_a), cooling break (nu_c),
+    and minimum energy break (nu_m). This model always requires that nu_m < nu_a < nu_c. 
+    '''
+
     def get_labels(p=None):
         if p is None:
             return ['p','log F_v', 'log nu_a','log nu_m', 'log nu_c']

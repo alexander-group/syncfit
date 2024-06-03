@@ -5,6 +5,10 @@ import numpy as np
 from .base_model import BaseModel
 
 class B5(BaseModel):
+    '''
+    Single break model for just the self-absorption break.
+    '''
+
     def get_labels(p=None):
         if p is None:
             return ['p','log F_v', 'log nu_a']

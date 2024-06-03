@@ -5,6 +5,12 @@ import numpy as np
 from .base_model import BaseModel
 
 class B5B3(BaseModel):
+    '''
+    Two-break model that uses both the self-absorption break and the cooling break.
+    This model forces the cooling break to always be larger than the self-absorption
+    break.
+    '''
+
     # Write some getters for things that are model specific
     def get_labels(p=None):
         if p is None:

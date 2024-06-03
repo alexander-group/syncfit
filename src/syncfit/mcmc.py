@@ -9,21 +9,29 @@ from .analysis import *
 from .models.b5_model import B5
 from .models.base_model import BaseModel
 
-def do_emcee(theta_init, nu, F_muJy, F_error, model=B5, niter=2000,
-             nwalkers=100, fix_p=None, day=None, plot=False):
-
+def do_emcee(theta_init:list[float], nu:list[float], F_muJy:list[float],
+             F_error:list[float], model:BaseModel=B5, niter:int=2000,
+             nwalkers:int=100, fix_p:float=None, day:str=None, plot:bool=False
+             ) -> tuple[list[float],list[float]]:
     """
-    nu - frequency in GHz
-    F_muJy - flux in micro janskies
-    F_error - flux error in micro janskies
-    fix_p: Will fix the p value to whatever you give, do not provide p in theta_init
-             if this is the case!
-    day: day of observation (string)
-    theta_init: array of initial guess 
-    model: Model class to use from syncfit.fitter.models, must be a subclass of BaseModel!
-
+    Fit the data with the given model using the emcee package.
+    
+    Args:
+        theta_init (list): array of initial guesses, must be the length expected by model
+        nu (list): list of frequencies in GHz
+        F_muJy (list): list of fluxes in micro janskies
+        F_error (list): list of flux error in micro janskies
+        model (BaseModel): Model class to use from syncfit.fitter.models. Can also be a custom model
+                           but it must be a subclass of BaseModel!
+        niter (int): The number of iterations to run on.
+        nwalkers (int): The number of walkers to use for emcee
+        fix_p (float): Will fix the p value to whatever you give, do not provide p in theta_init
+                               if this is the case!
+        day (string): day of observation, used for labeling plots
+        plot (bool): If True, generate the plots used for debugging. Default is False.
+    
     Returns:
-    flat_samples, log_prob
+        flat_samples, log_prob
     """
     
     # Check that the model subclasses BaseModel

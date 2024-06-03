@@ -6,11 +6,39 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import numpy as np
 
-class BaseModel(ABC):
+class _BaseModelMeta(type):
+    '''
+    This just gives all the subclasses for BaseModel the same docstrings
+    for the inherited abstract methods
+    '''
+    def __new__(mcls, classname, bases, cls_dict):
+        cls = super().__new__(mcls, classname, bases, cls_dict)
+        for name, member in cls_dict.items():
+            if not getattr(member, '__doc__'):
+                member.__doc__ = getattr(bases[-1], name).__doc__
+        return cls
+
+class BaseModel(object, metaclass=_BaseModelMeta):
+    '''
+    An Abstract Base Class to define the basic methods that all syncfit
+    models must contain. This will help maintain some level of standard for the models
+    while also allowing users to customize their own.
+    '''
 
     # Write some getters for things that are model specific
     # THESE WILL BE THE SAME ACROSS ALL MODELS!
-    def get_pos(theta_init, nwalkers):
+    def get_pos(theta_init:list, nwalkers:int) -> list[float]:
+        '''
+        Gets the initial position of all of the walkers assuming a gaussian distribution
+        centered at theta_init.
+
+        Args:
+            theta_init (list): Initial location of the walkers
+            nwalkers (int): Number of walkers
+
+        Returns:
+            A 2D array of the positions of all of the walkers
+        '''
         ndim = len(theta_init)
         if not isinstance(theta_init, np.ndarray):
             theta_init = np.array(theta_init)
@@ -21,7 +49,19 @@ class BaseModel(ABC):
         
         return pos
     
-    def get_emcee_args(nu, F_muJy, F_error, p=None):
+    def get_emcee_args(nu:list, F_muJy:list, F_error:list, p:float=None) -> dict:
+        '''
+        Packages up the args to be passed into the model based on the user input.
+
+        Args:
+            nu (list): frequencies in GHz
+            F_muJy (list): Fluxes in micro janskies
+            F_error (list): Flux errors in micro janskies
+            p (float): A p-value to pass to the model, only used if p-value is fixed
+
+        Returns:
+            Dictionary of values, converted for the modeling used in the mcmc
+        '''
         nu = 1e9*nu
         F = np.array(F_muJy).astype(float)*1e-3
         F_error = np.array(F_error)*1e-3
@@ -34,13 +74,32 @@ class BaseModel(ABC):
     # package those up for easy getting in do_emcee
     @classmethod
     def unpack_util(cls, theta_init, nu, F_muJy, F_error, nwalkers, p=None):
+        '''
+        A wrapper on the utility functions.
+
+        Args:
+            theta_init (list): List of initial theta locations
+            nu (list): frequencies in GHz
+            F_muJy (list): Fluxes in micro janskies
+            F_error (list): Flux errors in micro janskies
+            p (float): A p-value to pass to the model, only used if p-value is fixed
+            nwalkers (int): THe number of walkers to use
+        '''
         return (cls.get_pos(theta_init,nwalkers),
                 cls.get_labels(p=p),
                 cls.get_emcee_args(nu, F_muJy, F_error, p))
 
     @classmethod
-    def lnprob(cls, theta, **kwargs):
-        '''Keep or throw away step likelihood and priors'''
+    def lnprob(cls, theta:list, **kwargs):
+        '''Keep or throw away step likelihood and priors
+
+        Args:
+            theta (list): location of the walker
+            **kwargs: Any other arguments to be past to lnprior or loglik
+
+        Returns:
+            The likelihood of the data at that location
+        '''
         lp = cls.lnprior(theta, **kwargs)
         if not np.isfinite(lp):
             return -np.inf
@@ -49,7 +108,18 @@ class BaseModel(ABC):
 
     @classmethod
     def loglik(cls, theta, nu, F, F_error, p=None, **kwargs):
-        ''' Log Likelihood function '''
+        '''Log Likelihood function
+
+        Args:
+            theta (list): position of the walker
+            nu (list): frequencies in GHz
+            F_muJy (list): Fluxes in micro janskies
+            F_error (list): Flux errors in micro janskies
+            p (float): A p-value to pass to the model, only used if p-value is fixed
+
+        Returns:
+            The logarithmic likelihood of that theta position
+        '''
         if p is not None:
             model_result = cls.SED(nu, p, *theta)
         else:
@@ -65,16 +135,26 @@ class BaseModel(ABC):
     @staticmethod
     @abstractmethod
     def get_labels(*args, **kwargs):
+        '''
+        Describes a list of labels used in the return values of the mcmc chain.
+        This varies depending on the inputs to the MCMC.
+        '''
         pass
         
     @staticmethod
     @abstractmethod
     def SED(*args, **kwargs):
+        '''
+        Describes the SED model for the model that subclasses this BaseModel
+        '''
         pass
     
     @staticmethod
     @abstractmethod
     def lnprior(*args, **kwargs):
+        '''
+        Logarithmic prior function that can be changed based on the SED model.
+        '''
         pass
     
     # override __subclasshook__

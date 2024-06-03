@@ -5,7 +5,11 @@ import numpy as np
 from .base_model import BaseModel
 
 class B1B2_B3B4_Weighted(BaseModel):
-
+    '''
+    This is a specialized model that uses a weighted combination of the B1B2 model and
+    the B3B4 model. The idea of this model is from XXXYXYXYX et al. (YYYY).
+    '''
+    
     def get_labels(p=None):
         if p is None:
             return ['p','log F_v', 'log nu_a','log nu_m']

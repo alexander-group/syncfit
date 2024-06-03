@@ -5,6 +5,11 @@ import numpy as np
 from .base_model import BaseModel
 
 class B1B2(BaseModel):
+    '''
+    Two-break model for the self-absorption break (nu_a) and the minimal energy break
+    (nu_m). This model uses nu_m > nu_a, the opposite of the B4B5 model.
+    '''
+
     def get_labels(p=None):
         if p is None:
             return ['p','log F_v', 'log nu_a','log nu_m']

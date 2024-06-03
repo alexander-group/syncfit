@@ -5,6 +5,12 @@ import numpy as np
 from .base_model import BaseModel
 
 class B4B5(BaseModel):
+    '''
+    Two-break model for a combination of the self-absorption break (nu_a) and the
+    minimal energy break (nu_m). This model requires that nu_m < nu_a, you should
+    subclass this class and overwrite lnprior to redefine this. 
+    '''
+
     def get_labels(p=None):
         if p is None:
             return ['p','log F_v', 'log nu_a','log nu_m']

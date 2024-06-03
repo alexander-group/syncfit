@@ -1,0 +1,20 @@
+.. syncfit documentation master file, created by
+   sphinx-quickstart on Mon Jun  3 09:36:39 2024.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to syncfit's documentation!
+===================================
+
+The :code:`syncfit` module allows users to model synchrotron emission spectral energy distributions to
+extract properties about the system.
+
+.. include:: installation.rst
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   installation
+   examples
+   source
