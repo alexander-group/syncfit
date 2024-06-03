@@ -9,7 +9,6 @@ python:
       path: .
       extra_requirements:
         - docs
-  system_packages: true
 
 # Build from the docs/ directory with Sphinx
 sphinx:
