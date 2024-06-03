@@ -1,5 +1,3 @@
-version: 2
-
 build:
   os: "ubuntu-22.04"
   tools:
@@ -10,9 +8,9 @@ python:
     - method: pip
       path: .
       extra_requirements:
-	- docs
+        - docs
   system_packages: true
-  
+
 # Build from the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
