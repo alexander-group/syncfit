@@ -33,6 +33,18 @@ dependencies = [
   "emcee"
   ]
 
+[project.optional-dependencies]
+docs = [
+     "syncfit",
+     "Sphinx",
+     "myst_parser",
+     "nbsphinx",
+     "sphinx-book-theme",
+     "sphinx_copybutton",
+     "autodoc",
+     "ipykernel"
+]
+
 [project.urls]
 Home = "https://github.com/alexander-group/syncfit"
 
