@@ -49,7 +49,7 @@ class BaseModel(object, metaclass=_BaseModelMeta):
         
         return pos
     
-    def get_emcee_args(nu:list, F_muJy:list, F_error:list, p:float=None) -> dict:
+    def get_emcee_args(nu:list, F_muJy:list, F_error:list, p:float=None, upperlimit:list=None) -> dict:
         '''
         Packages up the args to be passed into the model based on the user input.
 
@@ -67,13 +67,13 @@ class BaseModel(object, metaclass=_BaseModelMeta):
         F_error = np.array(F_error)*1e-3
 
         if p is None:
-            return {'nu':nu, 'F':F, 'F_error':F_error} 
+            return {'nu':nu, 'F':F, 'F_error':F_error, 'upperlimit':upperlimit} 
         else:
-            return {'nu':nu, 'F':F, 'F_error':F_error, 'p':p} 
+            return {'nu':nu, 'F':F, 'F_error':F_error, 'p':p, 'upperlimit':upperlimit} 
 
     # package those up for easy getting in do_emcee
     @classmethod
-    def unpack_util(cls, theta_init, nu, F_muJy, F_error, nwalkers, p=None):
+    def unpack_util(cls, theta_init, nu, F_muJy, F_error, nwalkers, p=None, upperlimit=None):
         '''
         A wrapper on the utility functions.
 
@@ -87,7 +87,7 @@ class BaseModel(object, metaclass=_BaseModelMeta):
         '''
         return (cls.get_pos(theta_init,nwalkers),
                 cls.get_labels(p=p),
-                cls.get_emcee_args(nu, F_muJy, F_error, p))
+                cls.get_emcee_args(nu, F_muJy, F_error, p, upperlimit))
 
     @classmethod
     def lnprob(cls, theta:list, **kwargs):
@@ -130,7 +130,26 @@ class BaseModel(object, metaclass=_BaseModelMeta):
         chi2 = np.sum((F - model_result)**2/sigma2)
         ll = -0.5*chi2
         return ll
-            
+
+    @staticmethod
+    def _is_below_upperlimits(nu, F, upperlimits, theta, model, p=None):
+        '''
+        Checks that the location of theta is below any upperlimits
+        '''
+
+        if upperlimits is None:
+            return True
+        
+        where_upperlimit = np.where(upperlimits)[0]
+        F_upperlimits = F[where_upperlimit]
+
+        if p is None:
+            test_fluxes = model(nu, *theta)[where_upperlimit]
+        else:
+            test_fluxes = model(nu, p, *theta)[where_upperlimit]
+
+        return np.all(F_upperlimits > test_fluxes)
+    
     # Some *required* abstract methods
     @staticmethod
     @abstractmethod

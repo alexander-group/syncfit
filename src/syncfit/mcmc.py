@@ -11,7 +11,8 @@ from .models.base_model import BaseModel
 
 def do_emcee(theta_init:list[float], nu:list[float], F_muJy:list[float],
              F_error:list[float], model:BaseModel=B5, niter:int=2000,
-             nwalkers:int=100, fix_p:float=None, day:str=None, plot:bool=False
+             nwalkers:int=100, fix_p:float=None, upperlimits:list[bool]=None,
+             day:str=None, plot:bool=False
              ) -> tuple[list[float],list[float]]:
     """
     Fit the data with the given model using the emcee package.
@@ -27,6 +28,7 @@ def do_emcee(theta_init:list[float], nu:list[float], F_muJy:list[float],
         nwalkers (int): The number of walkers to use for emcee
         fix_p (float): Will fix the p value to whatever you give, do not provide p in theta_init
                                if this is the case!
+        upperlimits (list[bool]): True if the point is an upperlimit, False otherwise.
         day (string): day of observation, used for labeling plots
         plot (bool): If True, generate the plots used for debugging. Default is False.
     
@@ -43,8 +45,15 @@ def do_emcee(theta_init:list[float], nu:list[float], F_muJy:list[float],
     ndim = len(theta_init)
 
     # get some values from the import
+    nu = np.array(nu)
+    F_muJy = np.array(F_muJy)
+    F_error = np.array(F_error)
+    if upperlimits is not None:
+        upperlimits = np.array(upperlimits)
+        
     pos, labels, emcee_args = model.unpack_util(theta_init, nu, F_muJy, F_error,
-                                                nwalkers, p=fix_p)
+                                                nwalkers, p=fix_p,
+                                                upperlimit=upperlimits)
     
     # setup and run the MCMC
     nwalkers, ndim = pos.shape

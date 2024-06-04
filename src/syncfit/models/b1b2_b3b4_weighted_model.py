@@ -57,14 +57,18 @@ class B1B2_B3B4_Weighted(BaseModel):
 
         return F
 
-    def lnprior(theta, p=None, **kwargs):
+    def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
         ''' Priors: '''
+        uppertest = BaseModel._is_below_upperlimits(
+            nu, F, upperlimit, theta, B1B2_B3B4_Weighted.SED, p=p
+        )
+        
         if p is None:
             p, log_F_nu, log_nu_a, log_nu_m= theta
         else:
             log_F_nu, log_nu_a, log_nu_m= theta
 
-        if 2< p < 4 and -4 < log_F_nu < 2 and 6 < log_nu_a < 12 and 6 < log_nu_m < 12:
+        if 2< p < 4 and -4 < log_F_nu < 2 and 6 < log_nu_a < 12 and 6 < log_nu_m < 12 and uppertest:
             return 0.0
 
         else:

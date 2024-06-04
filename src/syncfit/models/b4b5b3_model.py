@@ -39,13 +39,17 @@ class B4B5B3(BaseModel):
 
         return F_nu * term1 * term2 * term3
 
-    def lnprior(theta, p=None, **kwargs):
+    def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
         ''' Priors: '''
+        uppertest = BaseModel._is_below_upperlimits(
+            nu, F, upperlimit, theta, B4B5B3.SED, p=p
+        )
+
         if p is None:
             p, log_F_nu, log_nu_a, log_nu_m, log_nu_c= theta
         else:
             log_F_nu, log_nu_a, log_nu_m, log_nu_c= theta
-        if 2< p < 4 and -4 < log_F_nu < 2 and 6 < log_nu_a < 11 and log_nu_m < log_nu_a and log_nu_a < log_nu_c:
+        if 2< p < 4 and -4 < log_F_nu < 2 and 6 < log_nu_a < 11 and log_nu_m < log_nu_a and log_nu_a < log_nu_c and uppertest:
             return 0.0
 
         else:
