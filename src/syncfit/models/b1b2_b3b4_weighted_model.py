@@ -2,9 +2,9 @@
 Various models to use in MCMC fitting 
 '''
 import numpy as np
-from .base_model import BaseModel
+from .syncfit_model import SyncfitModel
 
-class B1B2_B3B4_Weighted(BaseModel):
+class B1B2_B3B4_Weighted(SyncfitModel):
     '''
     This is a specialized model that uses a weighted combination of the B1B2 model and
     the B3B4 model. The idea of this model is from XXXYXYXYX et al. (YYYY).
@@ -59,7 +59,7 @@ class B1B2_B3B4_Weighted(BaseModel):
 
     def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
         ''' Priors: '''
-        uppertest = BaseModel._is_below_upperlimits(
+        uppertest = SyncfitModel._is_below_upperlimits(
             nu, F, upperlimit, theta, B1B2_B3B4_Weighted.SED, p=p
         )
         

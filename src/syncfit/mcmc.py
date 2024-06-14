@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import emcee
 from .analysis import *
 from .models.b5_model import B5
-from .models.base_model import BaseModel
+from .models.syncfit_model import SyncfitModel
 
 def do_emcee(theta_init:list[float], nu:list[float], F_muJy:list[float],
-             F_error:list[float], model:BaseModel=B5, niter:int=2000,
+             F_error:list[float], model:SyncfitModel=SyncfitModel, niter:int=2000,
              nwalkers:int=100, fix_p:float=None, upperlimits:list[bool]=None,
              day:str=None, plot:bool=False
              ) -> tuple[list[float],list[float]]:
@@ -22,8 +22,8 @@ def do_emcee(theta_init:list[float], nu:list[float], F_muJy:list[float],
         nu (list): list of frequencies in GHz
         F_muJy (list): list of fluxes in micro janskies
         F_error (list): list of flux error in micro janskies
-        model (BaseModel): Model class to use from syncfit.fitter.models. Can also be a custom model
-                           but it must be a subclass of BaseModel!
+        model (SyncfitModel): Model class to use from syncfit.fitter.models. Can also be a custom model
+                           but it must be a subclass of SyncfitModel!
         niter (int): The number of iterations to run on.
         nwalkers (int): The number of walkers to use for emcee
         fix_p (float): Will fix the p value to whatever you give, do not provide p in theta_init

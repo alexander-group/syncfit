@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import numpy as np
 
-class _BaseModelMeta(type):
+class _SyncfitModelMeta(type):
     '''
     This just gives all the subclasses for BaseModel the same docstrings
     for the inherited abstract methods
@@ -18,7 +18,7 @@ class _BaseModelMeta(type):
                 member.__doc__ = getattr(bases[-1], name).__doc__
         return cls
 
-class BaseModel(object, metaclass=_BaseModelMeta):
+class SyncfitModel(object, metaclass=_SyncfitModelMeta):
     '''
     An Abstract Base Class to define the basic methods that all syncfit
     models must contain. This will help maintain some level of standard for the models
@@ -184,3 +184,11 @@ class BaseModel(object, metaclass=_BaseModelMeta):
             if all(any(arg in B.__dict__ for B in C.__mro__) for arg in reqs):
                 return True
         return NotImplemented
+
+    # add a register method so users don't have to create a new class
+    @classmethod
+    def override(cls,func):
+        '''
+        This method should be used as a decorator to override other methods 
+        '''
+        exec(f'cls.{func.__name__} = func')

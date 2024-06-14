@@ -2,9 +2,9 @@
 Various models to use in MCMC fitting 
 '''
 import numpy as np
-from .base_model import BaseModel
+from .syncfit_model import SyncfitModel
 
-class B5(BaseModel):
+class B5(SyncfitModel):
     '''
     Single break model for just the self-absorption break.
     '''
@@ -30,7 +30,7 @@ class B5(BaseModel):
 
     def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
         ''' Priors: '''
-        uppertest = BaseModel._is_below_upperlimits(
+        uppertest = SyncfitModel._is_below_upperlimits(
             nu, F, upperlimit, theta, B5.SED, p=p
         )
         

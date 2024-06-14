@@ -31,7 +31,7 @@ Source Documentation
    :members:
    :inherited-members:
       
-.. autoclass:: syncfit.models.BaseModel
+.. autoclass:: syncfit.models.SyncfitModel
    :members:
       
 `syncfit.analysis`
