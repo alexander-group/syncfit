@@ -37,7 +37,8 @@ def plot_chains(sampler, labels, fig=None, axes=None):
 
     return fig, axes
 
-def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, p=None, method='max', fig=None, ax=None, day=None):
+def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None,
+                  p=None, method='random', fig=None, ax=None, day=None):
     '''
     Plot best fit model
 
@@ -52,7 +53,7 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, p=None, method='max',
         method [str]: Either 'max' or 'last' or 'random', default is max.
                       - max: takes the nkeep maximum probability values
                       - last: takes the last nkeep values from the chain
-                      - random: Chooses the nkeep//10 values from the last nkeep values in the chain
+                      - random: Chooses the nkeep values from the last nkeep*10 values in the chain
         fig [matplotlib.pyplot.Figure]: Matplotlib Figure object, Default is None and one will be created.
         axes [matplotlib.pyplot.Axis]: list of Matplotlib Axis object, Default is None and one will be created. 
 
@@ -67,7 +68,7 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, p=None, method='max',
     elif method == 'last':
         toplot = flat_samples[-nkeep:]
     elif method == 'random':
-        toplot = flat_samples[-nkeep:][np.random.randint(0, nkeep, nkeep//10)] 
+        toplot = flat_samples[-nkeep*10:][np.random.randint(0, nkeep*10, nkeep)] 
     else:
         raise ValueError('method must be either last or max!')
         
@@ -75,12 +76,17 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, p=None, method='max',
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(4,4))
-    
+
+    if t is not None or lum_dist is not None:
+        kwargs = dict(t=t,lum_dist=lum_dist)
+    else:
+        kwargs={}
+        
     for val in toplot:
         if p is not None:
-            res = model.SED(nu_plot, p, *val)
+            res = model.SED(nu_plot, p, *val, **kwargs)
         else:
-            res = model.SED(nu_plot, *val)
+            res = model.SED(nu_plot, *val, **kwargs)
             
         ax.plot(nu_plot, res,
                 '-', color='cornflowerblue', lw = 0.5, alpha = 0.1)

@@ -9,10 +9,12 @@ import emcee
 import dynesty
 from multiprocessing import Pool
 from .analysis import *
+from .models.mq_model import MQModel
 from .models.syncfit_model import SyncfitModel
 
 def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
-               ndim:int, model:SyncfitModel=SyncfitModel, fix_p:float=None,
+               lum_dist:float=None, t:float=None,
+               model:SyncfitModel=MQModel, fix_p:float=None,
                upperlimits:list[bool]=None, ncores:int=1, seed:int=None,
                **dynesty_kwargs
              ) -> tuple[list[float],list[float]]:
@@ -25,7 +27,8 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
         F_error (list): list of flux error in milli janskies
         model (SyncfitModel): Model class to use from syncfit.fitter.models. Can also be a custom model
                            but it must be a subclass of SyncfitModel!
-        ndim (int): The number of dimensions in theta
+        lum_dist (float): luminosity distance in cgs units. Only needed for MQModel. Default is None.
+        t (flost): observation time in seconds. Only needed for MQModel. Default is None.
         fix_p (float): Will fix the p value to whatever you give, do not provide p in theta_init
                                if this is the case!
         upperlimits (list[bool]): True if the point is an upperlimit, False otherwise.
@@ -35,9 +38,12 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     Returns:
         flat_samples, log_prob
     """
-
+    if isinstance(model(), MQModel) and (lum_dist is None or t is None):
+        raise ValueError('lum_dist and t reequired for MQModel!')
+    
     # get the extra args
-    dynesty_args = model.get_emcee_args(nu, F_mJy, F_error, p=fix_p)
+    dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t, p=fix_p)
+    ndim = len(model.get_labels(p=fix_p))
     rstate = np.random.default_rng(seed)
 
     # construct the sampler and run it
@@ -60,11 +66,11 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
                 'The override decorator syntax is not currently supported for dynesty!'
             )
             
-    return dsampler
-        
+    return dsampler        
 
 def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
-             F_error:list[float], model:SyncfitModel=SyncfitModel, niter:int=2000,
+             F_error:list[float], lum_dist:float=None, t:float=None,
+             model:SyncfitModel=SyncfitModel, niter:int=2000,
              nwalkers:int=100, fix_p:float=None, upperlimits:list[bool]=None,
              day:str=None, plot:bool=False, ncores:int=1
              ) -> tuple[list[float],list[float]]:
@@ -82,6 +88,8 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
         nwalkers (int): The number of walkers to use for emcee
         fix_p (float): Will fix the p value to whatever you give, do not provide p in theta_init
                                if this is the case!
+        lum_dist (float): luminosity distance in cgs units. Only needed for MQModel. Default is None.
+        t (flost): observation time in seconds. Only needed for MQModel. Default is None.
         upperlimits (list[bool]): True if the point is an upperlimit, False otherwise.
         day (string): day of observation, used for labeling plots
         plot (bool): If True, generate the plots used for debugging. Default is False.
@@ -89,10 +97,8 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
     Returns:
         flat_samples, log_prob
     """
-    
-    # Check that the model subclasses BaseModel
-    # if issubclass(model, BaseModel):
-    #    raise ValueError('Input model is not a subclass of BaseModel!!')
+    if isinstance(model(), MQModel) and (lum_dist is None or t is None):
+        raise ValueError('lum_dist and t reequired for MQModel!')
     
     ### Fill in initial guesses and number of parameters  
     theta_init = np.array(theta_init)
@@ -106,8 +112,8 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
         upperlimits = np.array(upperlimits)
         
     pos, labels, emcee_args = model.unpack_util(theta_init, nu, F_mJy, F_error,
-                                                nwalkers, p=fix_p,
-                                                upperlimit=upperlimits)
+                                                nwalkers, p=fix_p, lum_dist=lum_dist,
+                                                t=t, upperlimit=upperlimits)
     
     # setup and run the MCMC
     nwalkers, ndim = pos.shape

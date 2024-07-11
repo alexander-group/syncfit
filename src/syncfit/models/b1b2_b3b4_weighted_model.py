@@ -17,7 +17,7 @@ class B1B2_B3B4_Weighted(SyncfitModel):
             return ['log F_v', 'log nu_a','log nu_m']
 
     # the model, must be named SED!!!
-    def SED(nu, p, log_F_nu, log_nu_a, log_nu_m):
+    def SED(nu, p, log_F_nu, log_nu_a, log_nu_m, **kwargs):
         ### Spectrum 1
         b1 = 2
         b2 = 1/3

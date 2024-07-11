@@ -19,7 +19,7 @@ class B5B3(SyncfitModel):
             return ['log F_v', 'log nu_a','log nu_c']
 
     # the model, must be named SED!!!
-    def SED(nu, p, log_F_nu, log_nu_a, log_nu_c):
+    def SED(nu, p, log_F_nu, log_nu_a, log_nu_c, **kwargs):
         b1 = 5/2
         b2 = (1-p)/2
         b3 = -p/2

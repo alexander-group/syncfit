@@ -51,7 +51,8 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         return pos
 
     @staticmethod
-    def get_emcee_args(nu:list, F_mJy:list, F_error:list, p:float=None, upperlimit:list=None) -> dict:
+    def get_kwargs(nu:list, F_mJy:list, F_error:list, lum_dist:float=None,
+                       t:float=None, p:float=None, upperlimit:list=None) -> dict:
         '''
         Packages up the args to be passed into the model based on the user input.
 
@@ -68,14 +69,23 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         F = np.array(F_mJy).astype(float)
         F_error = np.array(F_error)
 
-        if p is None:
-            return {'nu':nu, 'F':F, 'F_error':F_error, 'upperlimit':upperlimit} 
-        else:
-            return {'nu':nu, 'F':F, 'F_error':F_error, 'p':p, 'upperlimit':upperlimit} 
+        base_args = {'nu':nu, 'F':F, 'F_error':F_error, 'upperlimit':upperlimit} 
+        
+        if p is not None:
+            base_args['p'] = p
+
+        if lum_dist is not None:
+            base_args['lum_dist'] = lum_dist
+
+        if t is not None:
+            base_args['t'] = t
+            
+        return base_args
 
     # package those up for easy getting in do_emcee
     @classmethod
-    def unpack_util(cls, theta_init, nu, F_mJy, F_error, nwalkers, p=None, upperlimit=None):
+    def unpack_util(cls, theta_init, nu, F_mJy, F_error, nwalkers, lum_dist=None,
+                    t=None, p=None, upperlimit=None):
         '''
         A wrapper on the utility functions.
 
@@ -89,7 +99,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         '''
         return (cls.get_pos(theta_init,nwalkers),
                 cls.get_labels(p=p),
-                cls.get_emcee_args(nu, F_mJy, F_error, p, upperlimit))
+                cls.get_kwargs(nu, F_mJy, F_error, p, upperlimit))
 
     @classmethod
     def lnprob(cls, theta:list, **kwargs):
@@ -123,9 +133,9 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
             The logarithmic likelihood of that theta position
         '''
         if p is not None:
-            model_result = cls.SED(nu, p, *theta)
+            model_result = cls.SED(nu, p, *theta, **kwargs)
         else:
-            model_result = cls.SED(nu, *theta)
+            model_result = cls.SED(nu, *theta, **kwargs)
 
         if not np.any(np.isfinite(model_result)):
             ll = -np.inf
