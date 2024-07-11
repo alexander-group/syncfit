@@ -52,3 +52,32 @@ class B5B3(SyncfitModel):
 
         else:
             return -np.inf
+
+        def dynesty_transform(theta, nu, F, upperlimit, p=None, **kwargs):
+            '''
+            Prior transform for dynesty
+            '''
+
+            if p is None:
+                p, log_F_nu, log_nu_a, log_nu_c = theta
+                fixed_p = False
+            else:
+                fixed_p = True
+                log_F_nu, log_nu_a, log_nu_c = theta
+
+
+            # log_F_nu between -4 and 2
+            log_F_nu = log_F_nu*6 - 4
+
+            # log_nu_a between 6 and 11
+            log_nu_a = log_nu_a*5 + 6
+
+            # same transform to log_nu_c
+            log_nu_c = log_nu_c*5 + 6
+            
+            if not fixed_p:
+                # p should be between 2 and 4
+                p = 2*p + 2
+
+                return p,log_F_nu,log_nu_a,log_nu_c
+            return log_F_nu,log_nu_a,log_nu_c

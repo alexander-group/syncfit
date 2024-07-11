@@ -1,17 +1,26 @@
 '''
 Some useful analysis functions
 '''
-
+from dynesty import DynamicNestedSampler
+from emcee import EnsembleSampler
 import numpy as np
 
 def extract_output(sampler, **kwargs):
     '''
     Extracts the flattened samples and log_prob from sampler
     '''
-
-    flat_samples = sampler.get_chain(flat=True, **kwargs)
-    log_prob = sampler.get_log_prob(flat=True, **kwargs)
-
+    if isinstance(sampler, EnsembleSampler):
+        flat_samples = sampler.get_chain(flat=True, **kwargs)
+        log_prob = sampler.get_log_prob(flat=True, **kwargs)
+    elif isinstance(sampler, DynamicNestedSampler):
+        res = sampler.results.asdict()
+        flat_samples = res['samples']
+        log_prob = res['logl']
+    else:
+        raise ValueError(
+            'input sampler is neither a NestedSampler nor an Ensemble Sampler!'
+        )
+        
     return flat_samples, log_prob
 
 def get_ndim(sampler):

@@ -27,6 +27,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
 
     # Write some getters for things that are model specific
     # THESE WILL BE THE SAME ACROSS ALL MODELS!
+    @staticmethod
     def get_pos(theta_init:list, nwalkers:int) -> list[float]:
         '''
         Gets the initial position of all of the walkers assuming a gaussian distribution
@@ -48,23 +49,24 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         pos = theta_init + pos_offset # this will offset the initial positions by pos_offset
         
         return pos
-    
-    def get_emcee_args(nu:list, F_muJy:list, F_error:list, p:float=None, upperlimit:list=None) -> dict:
+
+    @staticmethod
+    def get_emcee_args(nu:list, F_mJy:list, F_error:list, p:float=None, upperlimit:list=None) -> dict:
         '''
         Packages up the args to be passed into the model based on the user input.
 
         Args:
             nu (list): frequencies in GHz
-            F_muJy (list): Fluxes in micro janskies
-            F_error (list): Flux errors in micro janskies
+            F_mJy (list): Fluxes in milli janskies
+            F_error (list): Flux errors in milli janskies
             p (float): A p-value to pass to the model, only used if p-value is fixed
 
         Returns:
             Dictionary of values, converted for the modeling used in the mcmc
         '''
         nu = 1e9*nu
-        F = np.array(F_muJy).astype(float)*1e-3
-        F_error = np.array(F_error)*1e-3
+        F = np.array(F_mJy).astype(float)
+        F_error = np.array(F_error)
 
         if p is None:
             return {'nu':nu, 'F':F, 'F_error':F_error, 'upperlimit':upperlimit} 
@@ -73,21 +75,21 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
 
     # package those up for easy getting in do_emcee
     @classmethod
-    def unpack_util(cls, theta_init, nu, F_muJy, F_error, nwalkers, p=None, upperlimit=None):
+    def unpack_util(cls, theta_init, nu, F_mJy, F_error, nwalkers, p=None, upperlimit=None):
         '''
         A wrapper on the utility functions.
 
         Args:
             theta_init (list): List of initial theta locations
             nu (list): frequencies in GHz
-            F_muJy (list): Fluxes in micro janskies
-            F_error (list): Flux errors in micro janskies
+            F_mJy (list): Fluxes in milli janskies
+            F_error (list): Flux errors in milli janskies
             p (float): A p-value to pass to the model, only used if p-value is fixed
             nwalkers (int): THe number of walkers to use
         '''
         return (cls.get_pos(theta_init,nwalkers),
                 cls.get_labels(p=p),
-                cls.get_emcee_args(nu, F_muJy, F_error, p, upperlimit))
+                cls.get_emcee_args(nu, F_mJy, F_error, p, upperlimit))
 
     @classmethod
     def lnprob(cls, theta:list, **kwargs):
@@ -125,10 +127,14 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         else:
             model_result = cls.SED(nu, *theta)
 
-        sigma2 = F_error**2
+        if not np.any(np.isfinite(model_result)):
+            ll = -np.inf
+        else:    
+            sigma2 = F_error**2
         
-        chi2 = np.sum((F - model_result)**2/sigma2)
-        ll = -0.5*chi2
+            chi2 = np.sum((F - model_result)**2/sigma2)
+            ll = -0.5*chi2
+        
         return ll
 
     @staticmethod
@@ -173,6 +179,14 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
     def lnprior(*args, **kwargs):
         '''
         Logarithmic prior function that can be changed based on the SED model.
+        '''
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def dynesty_transform(*args, **kwargs):
+        '''
+        Prior transformation function passed to dynesty
         '''
         pass
     

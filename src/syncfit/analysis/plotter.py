@@ -37,7 +37,7 @@ def plot_chains(sampler, labels, fig=None, axes=None):
 
     return fig, axes
 
-def plot_best_fit(model, sampler, nu, F, nkeep=1000, p=None, method='max', fig=None, ax=None, day=None):
+def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, p=None, method='max', fig=None, ax=None, day=None):
     '''
     Plot best fit model
 
@@ -46,9 +46,13 @@ def plot_best_fit(model, sampler, nu, F, nkeep=1000, p=None, method='max', fig=N
         sampler [emcee.EnsembleSampler]: Emcee EnsembleSampler object after running the MCMC
         nu [list]: the observed frequencies
         F [list]: The observed flux densities
+        Ferr [list]: The observed flux error
         nkeep [int]: Number of values to keep
         p [float]: p-value used, if not None
-        method [str]: Either 'max' or 'last', default is max.
+        method [str]: Either 'max' or 'last' or 'random', default is max.
+                      - max: takes the nkeep maximum probability values
+                      - last: takes the last nkeep values from the chain
+                      - random: Chooses the nkeep//10 values from the last nkeep values in the chain
         fig [matplotlib.pyplot.Figure]: Matplotlib Figure object, Default is None and one will be created.
         axes [matplotlib.pyplot.Axis]: list of Matplotlib Axis object, Default is None and one will be created. 
 
@@ -62,6 +66,10 @@ def plot_best_fit(model, sampler, nu, F, nkeep=1000, p=None, method='max', fig=N
         toplot = flat_samples[np.argsort(log_prob)[-nkeep:]]
     elif method == 'last':
         toplot = flat_samples[-nkeep:]
+    elif method == 'random':
+        toplot = flat_samples[-nkeep:][np.random.randint(0, nkeep, nkeep//10)] 
+    else:
+        raise ValueError('method must be either last or max!')
         
     nu_plot = np.arange(1e8,3e11,1e7)
 
@@ -75,15 +83,13 @@ def plot_best_fit(model, sampler, nu, F, nkeep=1000, p=None, method='max', fig=N
             res = model.SED(nu_plot, *val)
             
         ax.plot(nu_plot, res,
-                '-', color='k', lw = 0.5, alpha = 0.1)
+                '-', color='cornflowerblue', lw = 0.5, alpha = 0.1)
         
-    ax.errorbar(nu, F, fmt='o', markeredgecolor='black',
-                markeredgewidth=3, markersize=15, c='r')
+    ax.errorbar(nu, F, yerr=Ferr, fmt='o', markerfacecolor='none', markeredgecolor='k')
 
     if day is not None:
         ax.text(1.25e9,2e-2,s='Day '+ day, fontsize = 20)
-    #ax.set_ylim(8e-4,55)
-    #ax.set_xlim(0.1e9,2e11)
+
     ax.set_yscale('log')
     ax.set_xscale('log')
     plt.show()
