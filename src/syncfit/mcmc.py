@@ -13,7 +13,8 @@ from .models.syncfit_model import SyncfitModel
 
 def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
                ndim:int, model:SyncfitModel=SyncfitModel, fix_p:float=None,
-               upperlimits:list[bool]=None, ncores:int=1, seed:int=None
+               upperlimits:list[bool]=None, ncores:int=1, seed:int=None,
+               **dynesty_kwargs
              ) -> tuple[list[float],list[float]]:
     """
     Fit the data with the given model using the dynesty nested sampling package
@@ -29,7 +30,8 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
                                if this is the case!
         upperlimits (list[bool]): True if the point is an upperlimit, False otherwise.
         ncores (int) : The number of cores to run on, default is 1 and won't multiprocess
-        seed (int): The seed for the random number generator passed to dynesty
+        seed (int): The seed for the random number generator passed to dynesty,
+        dynesty_kwargs : kwargs to pass to dynesty 
     Returns:
         flat_samples, log_prob
     """
@@ -47,11 +49,10 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     with Pool(ncores) as pool:
         pool.size = ncores
         dsampler = dynesty.DynamicNestedSampler(model.lnprob, model.dynesty_transform,
-                                                ndim=ndim, bound='multi',
-                                                sample='rwalk', rstate=rstate,
+                                                ndim=ndim, rstate=rstate,
                                                 logl_kwargs=dynesty_args,
                                                 ptform_kwargs=dynesty_args,
-                                                pool=pool)
+                                                pool=pool, **dynesty_kwargs)
         try:
             dsampler.run_nested()
         except PicklingError:
