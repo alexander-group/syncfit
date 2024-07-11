@@ -29,10 +29,6 @@ class MQModel(SyncfitModel):
         f = 3.0/16.0
         ell_dec = 1.0
 
-        #t = (1952*u.day).cgs.value # days to seconds
-        #t = (409*u.day).cgs.value # days to seconds for cmc
-        #t = (300*u.day).cgs.value # for wtn
-
         Mdot_over_vw = (10**logMdot*(c.M_sun/u.yr/1e8)).cgs.value
 
         Lnu = Lnu_of_nu(
@@ -41,9 +37,6 @@ class MQModel(SyncfitModel):
             f=f,ell_dec=ell_dec,radius_insteadof_time=False
         ) * u.erg / (u.s * u.Hz)
 
-        # lum_dist = (214.4*u.Mpc).cgs
-        #lum_dist = (8.22*u.Gpc).cgs # for cmc
-        # lum_dist = (219*u.Mpc).cgs # for wtn 
         Fnu = (Lnu / (4*np.pi*lum_dist**2)).to(u.mJy) # mJy
 
         return Fnu.value
