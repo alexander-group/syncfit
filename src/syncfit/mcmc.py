@@ -45,7 +45,7 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t, p=fix_p)
     ndim = len(model.get_labels(p=fix_p))
     rstate = np.random.default_rng(seed)
-
+    
     # construct the sampler and run it
     # NOTE: I give it the lnprob instead of loglik because there can be some other
     # priors that are built into the lnprob that can not be in the dynesty prior
