@@ -30,6 +30,7 @@ classifiers = [
 dependencies = [
   "numpy>=1.20",
   "matplotlib",
+  "scipy",
   "emcee",
   "dynesty"
   ]

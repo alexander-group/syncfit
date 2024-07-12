@@ -14,7 +14,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-# import syncfit
+import syncfit
 from typing import List
 import sys
 import os
@@ -23,7 +23,6 @@ sys.path.append(os.path.abspath(os.pardir))
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
 sys.path.insert(0, os.path.abspath("../src/syncfit"))  # needed for autodocs
-sys.path.insert(0, os.path.abspath("../src/syncfit/models"))  # needed for autodocs
 
 # -- Project information -----------------------------------------------------
 
@@ -32,9 +31,8 @@ copyright = '2024, Noah Franz, Collin Christy'
 author = 'Noah Franz, Collin Christy'
 
 # The full version, including alpha/beta/rc tags
-from _version import __version__ as _v
-release = _v
-version = _v
+release = syncfit.__version__
+version = syncfit.__version__
 
 
 # -- General configuration ---------------------------------------------------
