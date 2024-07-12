@@ -6,6 +6,9 @@ Source Documentation
 
 `syncfit.models`
 ----------------
+.. autoclass:: syncfit.models.MQModel
+   :members:
+   :inherited-members:
 
 .. autoclass:: syncfit.models.B5
    :members:
