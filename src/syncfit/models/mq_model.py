@@ -37,7 +37,8 @@ class MQModel(SyncfitModel):
             f=f,ell_dec=ell_dec,radius_insteadof_time=False
         ) * u.erg / (u.s * u.Hz)
 
-        Fnu = (Lnu / (4*np.pi*lum_dist**2)).to(u.mJy) # mJy
+        lum_dist_cm = lum_dist*u.cm # give it units so the conversion works well
+        Fnu = (Lnu / (4*np.pi*(lum_dist_cm)**2)).to(u.mJy) # mJy
 
         return Fnu.value
     
