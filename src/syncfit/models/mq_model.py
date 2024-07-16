@@ -51,9 +51,9 @@ class MQModel(SyncfitModel):
         )
         
         if p is None:
-            p, log_bG_sh, logMdot, epsilon_T, epsilon_e, log_epsilon_B = theta
+            p, log_bG_sh, logMdot, epsilon_T, epsilon_e, epsilon_B = theta
         else:
-            log_bG_sh, logMdot, epsilon_T, epsilon_e, log_epsilon_B = theta
+            log_bG_sh, logMdot, epsilon_T, epsilon_e, epsilon_B = theta
 
         if (uppertest and
             2 < p < 4 and 
