@@ -7,7 +7,7 @@ Quataert (2024) paper.
 
 import numpy as np
 from .syncfit_model import SyncfitModel
-from .thermalsyn_v2 import Lnu_of_nu
+from .thermal_util import Lnu_of_nu
 from astropy import units as u
 from astropy import constants as c
 
@@ -15,9 +15,9 @@ class MQModel(SyncfitModel):
     
     def get_labels(p=None):
         if p is None:
-            return ['p', 'bG_sh', 'log Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
+            return ['p', 'log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
         else:
-            return ['bG_sh', 'log Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
+            return ['log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
 
     def SED(nu, p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
             lum_dist, t, **kwargs):       
@@ -42,20 +42,22 @@ class MQModel(SyncfitModel):
 
         return Fnu.value
     
-    def lnprior(theta, nu, F, p=None, **kwargs):
+    def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
         '''
         The prior
         '''
-
+        uppertest = SyncfitModel._is_below_upperlimits(
+            nu, F, upperlimit, theta, MQModel.SED, p=p
+        )
+        
         if p is None:
-            p, bG_sh, logMdot, epsilon_T, epsilon_e, log_epsilon_B = theta
+            p, log_bG_sh, logMdot, epsilon_T, epsilon_e, log_epsilon_B = theta
         else:
-            bG_sh, logMdot, epsilon_T, epsilon_e, log_epsilon_B = theta
+            log_bG_sh, logMdot, epsilon_T, epsilon_e, log_epsilon_B = theta
 
-        epsilon_B = epsilon_e # assume equipartition
-
-        if (2 < p < 4 and 
-            0.01 < bG_sh < 100 and 
+        if (uppertest and
+            2 < p < 4 and 
+            -3 < log_bG_sh < 3 and 
             -10 < logMdot < 0 and 
             -6 < epsilon_e < 0 and 
             -6 < epsilon_T < 0 and
@@ -82,7 +84,7 @@ class MQModel(SyncfitModel):
             log_bG_sh, logMdot, epsilon_T, epsilon_e, epsilon_B = theta
 
         # log_bG_sh should be between -2 and 2
-        log_bG_sh = log_bG_sh*4 - 2
+        log_bG_sh = log_bG_sh*6 - 3
 
         # -10 < logMdot < 0
         logMdot*=-10
