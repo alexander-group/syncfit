@@ -16,7 +16,7 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
                lum_dist:float=None, t:float=None,
                model:SyncfitModel=MQModel, fix_p:float=None,
                upperlimits:list[bool]=None, ncores:int=1, seed:int=None,
-               **dynesty_kwargs
+               run_kwargs={}, dynesty_kwargs={}, logprob_kwargs={}
              ) -> tuple[list[float],list[float]]:
     """
     Fit the data with the given model using the dynesty nested sampling package
@@ -34,7 +34,11 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
         upperlimits (list[bool]): True if the point is an upperlimit, False otherwise.
         ncores (int) : The number of cores to run on, default is 1 and won't multiprocess
         seed (int): The seed for the random number generator passed to dynesty,
-        dynesty_kwargs : kwargs to pass to dynesty 
+        run_kwargs (dict) : kwargs to pass to dynesty.run_sampler
+        dynesty_kwargs (dict) : kwargs to pass to dynesty.DynamicNestedSampler
+        logprob_kwargs (dict) : kwargs to pass to the logprob. For the most part this is
+                                handled internally but in case someone wrote a custom
+                                model they should be able to pass in custom kwargs.
     Returns:
         flat_samples, log_prob
     """
@@ -43,6 +47,11 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     
     # get the extra args
     dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t, p=fix_p)
+
+    # combine these with the logprob_kwargs
+    # make the logprob_kwargs second so it overwrites anything we set here
+    dynesty_args = dynesty_args | logprob_kwargs
+    
     ndim = len(model.get_labels(p=fix_p))
     rstate = np.random.default_rng(seed)
     
@@ -60,7 +69,7 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
                                                 ptform_kwargs=dynesty_args,
                                                 pool=pool, **dynesty_kwargs)
         try:
-            dsampler.run_nested()
+            dsampler.run_nested(**run_kwargs)
         except PicklingError:
             raise ValueError(
                 'The override decorator syntax is not currently supported for dynesty!'
