@@ -4,6 +4,7 @@ on. This allows for more flexibility and customization in the package.
 '''
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+import warnings
 import numpy as np
 
 class _SyncfitModelMeta(type):
@@ -132,10 +133,12 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         Returns:
             The logarithmic likelihood of that theta position
         '''
-        if p is not None:
-            model_result = cls.SED(nu, p, *theta, **kwargs)
-        else:
-            model_result = cls.SED(nu, *theta, **kwargs)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            if p is not None:
+                model_result = cls.SED(nu, p, *theta, **kwargs)
+            else:
+                model_result = cls.SED(nu, *theta, **kwargs)
 
         if not np.any(np.isfinite(model_result)):
             ll = -np.inf
