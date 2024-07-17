@@ -28,7 +28,7 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
         model (SyncfitModel): Model class to use from syncfit.fitter.models. Can also be a custom model
                            but it must be a subclass of SyncfitModel!
         lum_dist (float): luminosity distance in cgs units. Only needed for MQModel. Default is None.
-        t (flost): observation time in seconds. Only needed for MQModel. Default is None.
+        t (flost): observation time in days. Only needed for MQModel. Default is None.
         fix_p (float): Will fix the p value to whatever you give, do not provide p in theta_init
                                if this is the case!
         upperlimits (list[bool]): True if the point is an upperlimit, False otherwise.
@@ -45,10 +45,14 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
         flat_samples, log_prob
     """
     # instantiate a new model object
-    model = model(p=fix_p)
-    
-    if isinstance(model, MQModel) and (lum_dist is None or t is None):
+    test_model = model() # just for now
+    if isinstance(test_model, MQModel) and (lum_dist is None):
         raise ValueError('lum_dist and t reequired for MQModel!')
+
+    if isinstance(test_model, MQModel):
+        model = model(p=fix_p, t=t)
+    else:
+        model = model(p=fix_p)
     
     # get the extra args
     dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t)

@@ -189,7 +189,6 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         Pack theta into a dictionary
         '''
         return {param:theta[idx] for idx, param in enumerate(self.labels)}
-
     
     def lnprior(self, theta, nu, F, upperlimit, **kwargs):
         '''

@@ -4,6 +4,7 @@ Some useful plotting code from the outputs of the mcmc
 
 import matplotlib.pyplot as plt
 from .util import *
+from ..models import MQModel
 
 def plot_chains(sampler, labels, fig=None, axes=None):
     '''
@@ -37,7 +38,7 @@ def plot_chains(sampler, labels, fig=None, axes=None):
 
     return fig, axes
 
-def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None,
+def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None,
                   nu_arr=None, method='random', fig=None, ax=None, day=None):
     '''
     Plot best fit model
@@ -60,7 +61,9 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None
     Returns:
         matplotlib fig, ax
     '''
-
+    if isinstance(model, MQModel) and model.t is not None:
+        t = model.t
+    
     flat_samples, log_prob = extract_output(sampler)
     
     if method == 'max':
@@ -80,8 +83,10 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None
     if ax is None:
         fig, ax = plt.subplots(figsize=(4,4))
 
-    if t is not None or lum_dist is not None:
-        kwargs = dict(t=t,lum_dist=lum_dist)
+    if lum_dist is not None and model.t is None:
+        kwargs = dict(lum_dist=lum_dist)
+    elif lum_dist is not None and model.t is not None:
+        kwargs = dict(lum_dist=lum_dist, t=t)
     else:
         kwargs={}
         

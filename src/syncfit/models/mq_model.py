@@ -13,36 +13,37 @@ from astropy import constants as c
 
 class MQModel(SyncfitModel):
 
-    def __init__(self, p=None):
+    def __init__(self, p=None, t=None):
         super().__init__(p=p)
-
+        self.t = t
+        self.labels = self.get_labels(p=p, t=t)
+        self.ndim = len(self.labels)
+        
         # then set the default prior for this model
-        if p is None:
-            self.prior = dict(
-                p=[2,4],
-                log_bG_sh=[-3,3],
-                log_Mdot=[-10,0],
-                log_epsilon_e=[-3,0],
-                log_epsilon_B=[-3,0],
-                log_epsilon_T=[-3,0]
-            )
-        else:
-            self.prior = dict(
-                log_bG_sh=[-3,3],
-                log_Mdot=[-10,0],
-                log_epsilon_e=[-3,0],
-                log_epsilon_B=[-3,0],
-                log_epsilon_T=[-3,0]
-            )
-    
-    def get_labels(self, p=None):
-        if p is None:
-            return ['p', 'log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
-        else:
-            return ['log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
+        self.prior = dict(
+            log_bG_sh=[-3,3],
+            log_Mdot=[-10,0],
+            log_epsilon_e=[-3,0],
+            log_epsilon_B=[-3,0],
+            log_epsilon_T=[-3,0]
+        )
 
+        if p is None:
+            self.prior['p'] = [2,4]
+
+        if t is None:
+            self.prior['t'] = [0.1, 1_000] # super wide prior as default
+            
+    def get_labels(self, p=None, t=None):
+        base_labels = ['log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
+        if p is None:
+            base_labels = ['p'] + base_labels
+        if t is None:
+            base_labels.append('t')
+        return base_labels
+            
     def SED(self, nu, p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
-            lum_dist, t, **kwargs):       
+            t, lum_dist, **kwargs):       
 
         # set microphysical and geometric parameters
         # log_epsilon_e = -1
@@ -51,6 +52,8 @@ class MQModel(SyncfitModel):
         f = 3.0/16.0
         ell_dec = 1.0
 
+        t = (t*u.day).to(u.s).value
+        
         Mdot_over_vw = (10**logMdot*(c.M_sun/u.yr/1e8)).cgs.value
 
         Lnu = Lnu_of_nu(
