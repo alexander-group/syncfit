@@ -9,15 +9,34 @@ class B1B2_B3B4_Weighted(SyncfitModel):
     This is a specialized model that uses a weighted combination of the B1B2 model and
     the B3B4 model. The idea of this model is from XXXYXYXYX et al. (YYYY).
     '''
-    
-    def get_labels(p=None):
+
+    def __init__(self, p=None):
+        super().__init__(p=p)
+
+        # then set the default prior for this model
         if p is None:
-            return ['p','log F_v', 'log nu_a','log nu_m']
+            self.prior = dict(
+                p=[2,4],
+                log_F_nu=[-4,2],
+                log_nu_a=[6,12],
+                log_nu_m=[6,12]
+            )
         else:
-            return ['log F_v', 'log nu_a','log nu_m']
+            self.prior = dict(
+                log_F_nu=[-4,2],
+                log_nu_a=[6,12],
+                log_nu_m=[6,12]
+            )
+
+    
+    def get_labels(self, p=None):
+        if p is None:
+            return ['p','log_F_nu', 'log_nu_a','log_nu_m']
+        else:
+            return ['log_F_nu', 'log_nu_a','log_nu_m']
 
     # the model, must be named SED!!!
-    def SED(nu, p, log_F_nu, log_nu_a, log_nu_m, **kwargs):
+    def SED(self, nu, p, log_F_nu, log_nu_a, log_nu_m, **kwargs):
         ### Spectrum 1
         b1 = 2
         b2 = 1/3
@@ -56,47 +75,3 @@ class B1B2_B3B4_Weighted(SyncfitModel):
         F = (w1*F1+w2*F2) / (w1+w2)
 
         return F
-
-    def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
-        ''' Priors: '''
-        uppertest = SyncfitModel._is_below_upperlimits(
-            nu, F, upperlimit, theta, B1B2_B3B4_Weighted.SED, p=p
-        )
-        
-        if p is None:
-            p, log_F_nu, log_nu_a, log_nu_m= theta
-        else:
-            log_F_nu, log_nu_a, log_nu_m= theta
-
-        if 2< p < 4 and -4 < log_F_nu < 2 and 6 < log_nu_a < 12 and 6 < log_nu_m < 12 and uppertest:
-            return 0.0
-
-        else:
-            return -np.inf
-
-    def dynesty_prior(theta, nu, F, upperlimit, p=None, **kwargs):
-        '''
-        Prior transform for dynesty
-        '''
-        if p is None:
-            p, log_F_nu, log_nu_a, log_nu_m= theta
-            fixed_p = False,
-        else:
-            fixed_p = True
-            log_F_nu, log_nu_a, log_nu_m= theta
-
-        # log_F_nu between -4 and 2
-        log_F_nu = log_F_nu*6 - 4
-        
-        # log_nu_a between 6 and 11
-        log_nu_a = log_nu_a*5 + 6
-        
-        # same transform to log_nu_c
-        log_nu_m = log_nu_m*5 + 6
-        
-        if not fixed_p:
-            # p should be between 2 and 4
-            p = 2*p + 2
-            
-            return p,log_F_nu,log_nu_a,log_nu_m
-        return log_F_nu,log_nu_a,log_nu_m

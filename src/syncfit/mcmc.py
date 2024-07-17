@@ -15,7 +15,7 @@ from .models.syncfit_model import SyncfitModel
 def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
                lum_dist:float=None, t:float=None,
                model:SyncfitModel=MQModel, fix_p:float=None,
-               upperlimits:list[bool]=None, ncores:int=1, seed:int=None,
+               upperlimits:list[bool]=None, ncores:int=1, seed:int=None, prior=None,
                run_kwargs={}, dynesty_kwargs={}, logprob_kwargs={}
              ) -> tuple[list[float],list[float]]:
     """
@@ -28,12 +28,14 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
         model (SyncfitModel): Model class to use from syncfit.fitter.models. Can also be a custom model
                            but it must be a subclass of SyncfitModel!
         lum_dist (float): luminosity distance in cgs units. Only needed for MQModel. Default is None.
-        t (flost): observation time in seconds. Only needed for MQModel. Default is None.
+        t (flost): observation time in days. Only needed for MQModel. Default is None.
         fix_p (float): Will fix the p value to whatever you give, do not provide p in theta_init
                                if this is the case!
         upperlimits (list[bool]): True if the point is an upperlimit, False otherwise.
         ncores (int) : The number of cores to run on, default is 1 and won't multiprocess
         seed (int): The seed for the random number generator passed to dynesty,
+        prior (dict) : dictionary defining the prior ranges. Keys must be same as model.get_labels().
+                       Value should be a list of length 2 like [min, max], both exclusive.
         run_kwargs (dict) : kwargs to pass to dynesty.run_sampler
         dynesty_kwargs (dict) : kwargs to pass to dynesty.DynamicNestedSampler
         logprob_kwargs (dict) : kwargs to pass to the logprob. For the most part this is
@@ -42,19 +44,35 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     Returns:
         flat_samples, log_prob
     """
-    if isinstance(model(), MQModel) and (lum_dist is None or t is None):
+    # instantiate a new model object
+    test_model = model() # just for now
+    if isinstance(test_model, MQModel) and (lum_dist is None):
         raise ValueError('lum_dist and t reequired for MQModel!')
+
+    if isinstance(test_model, MQModel):
+        model = model(p=fix_p, t=t)
+    else:
+        model = model(p=fix_p)
     
     # get the extra args
-    dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t, p=fix_p)
+    dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t)
 
     # combine these with the logprob_kwargs
     # make the logprob_kwargs second so it overwrites anything we set here
     dynesty_args = dynesty_args | logprob_kwargs
     
-    ndim = len(model.get_labels(p=fix_p))
+    ndim = model.ndim
     rstate = np.random.default_rng(seed)
-    
+
+    # set the model prior instance variable
+    if prior is not None:
+        model.prior = prior
+        
+    if set(model.prior.keys()) != set(model.labels):
+        raise ValueError(
+            f'Prior dictionary keys ({model.prior.keys()}) do not match the labels ({model.labels})!'
+        )
+        
     # construct the sampler and run it
     # NOTE: I give it the lnprob instead of loglik because there can be some other
     # priors that are built into the lnprob that can not be in the dynesty prior
@@ -75,13 +93,13 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
                 'The override decorator syntax is not currently supported for dynesty!'
             )
             
-    return dsampler        
+    return model, dsampler        
 
 def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
              F_error:list[float], lum_dist:float=None, t:float=None,
              model:SyncfitModel=SyncfitModel, niter:int=2000,
              nwalkers:int=100, fix_p:float=None, upperlimits:list[bool]=None,
-             day:str=None, plot:bool=False, ncores:int=1
+             day:str=None, plot:bool=False, ncores:int=1, prior=None
              ) -> tuple[list[float],list[float]]:
     """
     Fit the data with the given model using the emcee package.
@@ -106,7 +124,10 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
     Returns:
         flat_samples, log_prob
     """
-    if isinstance(model(), MQModel) and (lum_dist is None or t is None):
+    # instantiate a new model object
+    model = model(p=fix_p)
+    
+    if isinstance(model, MQModel) and (lum_dist is None or t is None):
         raise ValueError('lum_dist and t reequired for MQModel!')
     
     ### Fill in initial guesses and number of parameters  
@@ -121,12 +142,15 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
         upperlimits = np.array(upperlimits)
         
     pos, labels, emcee_args = model.unpack_util(theta_init, nu, F_mJy, F_error,
-                                                nwalkers, p=fix_p, lum_dist=lum_dist,
+                                                nwalkers, lum_dist=lum_dist,
                                                 t=t, upperlimit=upperlimits)
     
     # setup and run the MCMC
     nwalkers, ndim = pos.shape
 
+    if set(model.prior.keys()) != set(model.labels):
+        raise ValueError('Prior dictionary keys do not match the labels!')
+    
     with Pool(ncores) as pool:
         sampler = emcee.EnsembleSampler(
             nwalkers,
@@ -156,4 +180,4 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
         else:
             fig, ax = plot_best_fit(model, sampler, emcee_args['nu'], emcee_args['F'])
         
-    return sampler
+    return model, sampler

@@ -4,6 +4,7 @@ Some useful plotting code from the outputs of the mcmc
 
 import matplotlib.pyplot as plt
 from .util import *
+from ..models import MQModel
 
 def plot_chains(sampler, labels, fig=None, axes=None):
     '''
@@ -37,8 +38,8 @@ def plot_chains(sampler, labels, fig=None, axes=None):
 
     return fig, axes
 
-def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None,
-                  p=None, method='random', fig=None, ax=None, day=None):
+def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None,
+                  nu_arr=None, method='random', fig=None, ax=None, day=None):
     '''
     Plot best fit model
 
@@ -49,7 +50,7 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None
         F [list]: The observed flux densities
         Ferr [list]: The observed flux error
         nkeep [int]: Number of values to keep
-        p [float]: p-value used, if not None
+        nu_arr [list]: List of nus for the best fit lines to be plot with
         method [str]: Either 'max' or 'last' or 'random', default is max.
                       - max: takes the nkeep maximum probability values
                       - last: takes the last nkeep values from the chain
@@ -60,7 +61,9 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None
     Returns:
         matplotlib fig, ax
     '''
-
+    if isinstance(model, MQModel) and model.t is not None:
+        t = model.t
+    
     flat_samples, log_prob = extract_output(sampler)
     
     if method == 'max':
@@ -71,20 +74,25 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None
         toplot = flat_samples[-nkeep*10:][np.random.randint(0, nkeep*10, nkeep)] 
     else:
         raise ValueError('method must be either last or max!')
-        
-    nu_plot = np.arange(1e8,3e11,1e7)
 
+    if nu_arr is None:
+        nu_plot = np.arange(1e8,3e11,1e7)
+    else:
+        nu_plot = nu_arr
+        
     if ax is None:
         fig, ax = plt.subplots(figsize=(4,4))
 
-    if t is not None or lum_dist is not None:
-        kwargs = dict(t=t,lum_dist=lum_dist)
+    if lum_dist is not None and model.t is None:
+        kwargs = dict(lum_dist=lum_dist)
+    elif lum_dist is not None and model.t is not None:
+        kwargs = dict(lum_dist=lum_dist, t=t)
     else:
         kwargs={}
         
     for val in toplot:
-        if p is not None:
-            res = model.SED(nu_plot, p, *val, **kwargs)
+        if model.p is not None:
+            res = model.SED(nu_plot, model.p, *val, **kwargs)
         else:
             res = model.SED(nu_plot, *val, **kwargs)
             

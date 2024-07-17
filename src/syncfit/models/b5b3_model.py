@@ -11,15 +11,33 @@ class B5B3(SyncfitModel):
     break.
     '''
 
-    # Write some getters for things that are model specific
-    def get_labels(p=None):
+    def __init__(self, p=None):
+        super().__init__(p=p)
+
+        # then set the default prior for this model
         if p is None:
-            return ['p','log F_v', 'log nu_a','log nu_c']
+            self.prior = dict(
+                p=[2,4],
+                log_F_nu=[-4,2],
+                log_nu_a=[6,11],
+                log_nu_c=[7,15]
+            )
         else:
-            return ['log F_v', 'log nu_a','log nu_c']
+            self.prior = dict(
+                log_F_nu=[-4,2],
+                log_nu_a=[6,11],
+                log_nu_c=[7,15]
+            )
+    
+    # Write some getters for things that are model specific
+    def get_labels(self, p=None):
+        if p is None:
+            return ['p','log_F_nu', 'log_nu_a','log_nu_c']
+        else:
+            return ['log_F_nu', 'log_nu_a','log_nu_c']
 
     # the model, must be named SED!!!
-    def SED(nu, p, log_F_nu, log_nu_a, log_nu_c, **kwargs):
+    def SED(self, nu, p, log_F_nu, log_nu_a, log_nu_c, **kwargs):
         b1 = 5/2
         b2 = (1-p)/2
         b3 = -p/2
@@ -36,48 +54,25 @@ class B5B3(SyncfitModel):
 
         return F_nu * term1 * term2
 
-    def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
-        ''' Priors: '''
+    def lnprior(self, theta, nu, F, upperlimit, **kwargs):
+        '''
+        Logarithmic prior function that can be changed based on the SED model.
+        '''
         uppertest = SyncfitModel._is_below_upperlimits(
-            nu, F, upperlimit, theta, B5B3.SED, p=p
+            nu, F, upperlimit, theta, self.SED
         )
+
+        packed_theta = self.pack_theta(theta)
         
-        if p is None:
-            p, log_F_nu, log_nu_a, log_nu_c = theta
-        else:
-            log_F_nu, log_nu_a, log_nu_c = theta
-
-        if 2< p < 4 and -4 < log_F_nu < 2 and 6 < log_nu_a < 11 and log_nu_c > log_nu_a and uppertest:
+        all_res = []
+        for param, val in self.prior.items():
+            res = val[0] < packed_theta[param] < val[1]
+            all_res.append(res)
+            
+        if (all(all_res) and
+            uppertest and
+            packed_theta['log_nu_c'] > packed_theta['log_nu_a']
+            ):
             return 0.0
-
         else:
             return -np.inf
-
-        def dynesty_transform(theta, nu, F, upperlimit, p=None, **kwargs):
-            '''
-            Prior transform for dynesty
-            '''
-
-            if p is None:
-                p, log_F_nu, log_nu_a, log_nu_c = theta
-                fixed_p = False
-            else:
-                fixed_p = True
-                log_F_nu, log_nu_a, log_nu_c = theta
-
-
-            # log_F_nu between -4 and 2
-            log_F_nu = log_F_nu*6 - 4
-
-            # log_nu_a between 6 and 11
-            log_nu_a = log_nu_a*5 + 6
-
-            # same transform to log_nu_c
-            log_nu_c = log_nu_c*5 + 6
-            
-            if not fixed_p:
-                # p should be between 2 and 4
-                p = 2*p + 2
-
-                return p,log_F_nu,log_nu_a,log_nu_c
-            return log_F_nu,log_nu_a,log_nu_c
