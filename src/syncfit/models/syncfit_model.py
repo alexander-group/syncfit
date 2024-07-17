@@ -26,6 +26,12 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
     while also allowing users to customize their own.
     '''
 
+    def __init__(self, p=None):
+        self.labels = self.get_labels(p=p)
+        self.ndim = len(self.labels)
+        self.prior = None
+        self.p = p
+        
     # Write some getters for things that are model specific
     # THESE WILL BE THE SAME ACROSS ALL MODELS!
     @staticmethod
@@ -53,7 +59,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
 
     @staticmethod
     def get_kwargs(nu:list, F_mJy:list, F_error:list, lum_dist:float=None,
-                       t:float=None, p:float=None, upperlimit:list=None) -> dict:
+                       t:float=None, upperlimit:list=None) -> dict:
         '''
         Packages up the args to be passed into the model based on the user input.
 
@@ -72,9 +78,6 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
 
         base_args = {'nu':nu, 'F':F, 'F_error':F_error, 'upperlimit':upperlimit} 
         
-        if p is not None:
-            base_args['p'] = p
-
         if lum_dist is not None:
             base_args['lum_dist'] = lum_dist
 
@@ -84,9 +87,8 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         return base_args
 
     # package those up for easy getting in do_emcee
-    @classmethod
-    def unpack_util(cls, theta_init, nu, F_mJy, F_error, nwalkers, lum_dist=None,
-                    t=None, p=None, upperlimit=None):
+    def unpack_util(self, theta_init, nu, F_mJy, F_error, nwalkers, lum_dist=None,
+                    t=None, upperlimit=None):
         '''
         A wrapper on the utility functions.
 
@@ -98,12 +100,11 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
             p (float): A p-value to pass to the model, only used if p-value is fixed
             nwalkers (int): THe number of walkers to use
         '''
-        return (cls.get_pos(theta_init,nwalkers),
-                cls.get_labels(p=p),
-                cls.get_kwargs(nu, F_mJy, F_error, p, upperlimit))
+        return (self.get_pos(theta_init,nwalkers),
+                self.get_labels(p=self.p),
+                self.get_kwargs(nu, F_mJy, F_error, upperlimit))
 
-    @classmethod
-    def lnprob(cls, theta:list, **kwargs):
+    def lnprob(self, theta:list, **kwargs):
         '''Keep or throw away step likelihood and priors
 
         Args:
@@ -113,14 +114,13 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         Returns:
             The likelihood of the data at that location
         '''
-        lp = cls.lnprior(theta, **kwargs)
+        lp = self.lnprior(theta, **kwargs)
         if not np.isfinite(lp):
             return -np.inf
         else:
-            return lp + cls.loglik(theta, **kwargs)
+            return lp + self.loglik(theta, **kwargs)
 
-    @classmethod
-    def loglik(cls, theta, nu, F, F_error, p=None, **kwargs):
+    def loglik(self, theta, nu, F, F_error, **kwargs):
         '''Log Likelihood function
 
         Args:
@@ -135,10 +135,10 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         '''
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            if p is not None:
-                model_result = cls.SED(nu, p, *theta, **kwargs)
+            if self.p is not None:
+                model_result = self.SED(nu, self.p, *theta, **kwargs)
             else:
-                model_result = cls.SED(nu, *theta, **kwargs)
+                model_result = self.SED(nu, *theta, **kwargs)
 
         if not np.any(np.isfinite(model_result)):
             ll = -np.inf
@@ -151,7 +151,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         return ll
 
     @staticmethod
-    def _is_below_upperlimits(nu, F, upperlimits, theta, model, p=None):
+    def _is_below_upperlimits(nu, F, upperlimits, theta, model):
         '''
         Checks that the location of theta is below any upperlimits
         '''
@@ -162,47 +162,96 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         where_upperlimit = np.where(upperlimits)[0]
         F_upperlimits = F[where_upperlimit]
 
-        if p is None:
+        if self.p is None:
             test_fluxes = model(nu, *theta)[where_upperlimit]
         else:
-            test_fluxes = model(nu, p, *theta)[where_upperlimit]
+            test_fluxes = model(nu, self.p, *theta)[where_upperlimit]
 
         return np.all(F_upperlimits > test_fluxes)
     
     # Some *required* abstract methods
-    @staticmethod
     @abstractmethod
-    def get_labels(*args, **kwargs):
+    def get_labels(self, *args, **kwargs):
         '''
         Describes a list of labels used in the return values of the mcmc chain.
         This varies depending on the inputs to the MCMC.
         '''
         pass
         
-    @staticmethod
     @abstractmethod
-    def SED(*args, **kwargs):
+    def SED(self, *args, **kwargs):
         '''
         Describes the SED model for the model that subclasses this BaseModel
         '''
         pass
+
+    def pack_theta(self, theta):
+        '''
+        Pack theta into a dictionary
+        '''
+        return {param:theta[idx] for idx, param in enumerate(self.labels)}
+
     
-    @staticmethod
-    @abstractmethod
-    def lnprior(*args, **kwargs):
+    def lnprior(self, theta, nu, F, upperlimit, **kwargs):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
-        pass
+        uppertest = SyncfitModel._is_below_upperlimits(
+            nu, F, upperlimit, theta, self.SED
+        )
 
-    @staticmethod
-    @abstractmethod
-    def dynesty_transform(*args, **kwargs):
+        packed_theta = self.pack_theta(theta)
+        
+        all_res = []
+        for param, val in self.prior.items():
+            res = val[0] < packed_theta[param] < val[1]
+            all_res.append(res)
+
+        if all(all_res) and uppertest:
+            return 0.0
+        else:
+            return -np.inf
+
+    def _transform_dynesty_transform(self, param, val):
         '''
-        Prior transformation function passed to dynesty
+        Subfunction for transforming the dynesty inputs to the correct prior range
         '''
-        pass
-    
+        diff = abs(val[0]-val[1])
+        if val[0] == val[1] or (val[0] == 0 and val[1] == 0) or val[0] > val[1]:
+            raise ValueError(f'Invalid prior range for {param}!')
+
+        elif val[0] == 0 and val[1] != 0:
+            return param*val[1]
+
+        elif val[0] != 0 and val[1] == 0:
+            return param*val[0]
+
+        elif val[0] > 0 and val[1] > 0:
+            linear_shift = min(val)
+            return param*diff + linear_shift
+
+        elif val[0] < 0 and val[1] > 0:
+            linear_shift = val[1]
+            return param*diff - linear_shift
+
+        elif val[0] < 0 and val[0] < 0:
+            linear_shift = abs(max(val))
+            return -param*diff - linear_shift
+
+        else:
+            raise ValueError('This is a prior range we had not considered!')
+
+    def dynesty_transform(self, theta, **kwargs):
+        '''
+        Transform the input values to the correct prior ranges for dynesty
+        '''
+        packed_theta = self.pack_theta(theta)
+        return tuple(
+            self._transform_dynesty_transform(
+                packed_theta[p],v
+            ) for p,v in self.prior.items()
+        )
+            
     # override __subclasshook__
     @classmethod
     def __subclasshook__(cls, C):

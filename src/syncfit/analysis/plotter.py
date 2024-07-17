@@ -38,7 +38,7 @@ def plot_chains(sampler, labels, fig=None, axes=None):
     return fig, axes
 
 def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None,
-                  p=None, nu_arr=None, method='random', fig=None, ax=None, day=None):
+                  nu_arr=None, method='random', fig=None, ax=None, day=None):
     '''
     Plot best fit model
 
@@ -49,7 +49,6 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None
         F [list]: The observed flux densities
         Ferr [list]: The observed flux error
         nkeep [int]: Number of values to keep
-        p [float]: p-value used, if not None
         nu_arr [list]: List of nus for the best fit lines to be plot with
         method [str]: Either 'max' or 'last' or 'random', default is max.
                       - max: takes the nkeep maximum probability values
@@ -87,8 +86,8 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None, t=None
         kwargs={}
         
     for val in toplot:
-        if p is not None:
-            res = model.SED(nu_plot, p, *val, **kwargs)
+        if model.p is not None:
+            res = model.SED(nu_plot, model.p, *val, **kwargs)
         else:
             res = model.SED(nu_plot, *val, **kwargs)
             

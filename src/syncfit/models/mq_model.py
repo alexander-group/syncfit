@@ -12,14 +12,36 @@ from astropy import units as u
 from astropy import constants as c
 
 class MQModel(SyncfitModel):
+
+    def __init__(self, p=None):
+        super().__init__(p=p)
+
+        # then set the default prior for this model
+        if p is None:
+            self.prior = dict(
+                p=[2,4],
+                log_bG_sh=[-3,3],
+                log_Mdot=[-10,0],
+                log_epsilon_e=[-3,0],
+                log_epsilon_B=[-3,0],
+                log_epsilon_T=[-3,0]
+            )
+        else:
+            self.prior = dict(
+                log_bG_sh=[-3,3],
+                log_Mdot=[-10,0],
+                log_epsilon_e=[-3,0],
+                log_epsilon_B=[-3,0],
+                log_epsilon_T=[-3,0]
+            )
     
-    def get_labels(p=None):
+    def get_labels(self, p=None):
         if p is None:
             return ['p', 'log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
         else:
             return ['log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
 
-    def SED(nu, p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
+    def SED(self, nu, p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
             lum_dist, t, **kwargs):       
 
         # set microphysical and geometric parameters
@@ -41,67 +63,26 @@ class MQModel(SyncfitModel):
         Fnu = (Lnu / (4*np.pi*(lum_dist_cm)**2)).to(u.mJy) # mJy
 
         return Fnu.value
-    
-    def lnprior(theta, nu, F, upperlimit, p=None, **kwargs):
+
+    def lnprior(self, theta, nu, F, upperlimit, **kwargs):
         '''
-        The prior
+        Logarithmic prior function that can be changed based on the SED model.
         '''
         uppertest = SyncfitModel._is_below_upperlimits(
-            nu, F, upperlimit, theta, MQModel.SED, p=p
+            nu, F, upperlimit, theta, self.SED
         )
+
+        packed_theta = self.pack_theta(theta)
         
-        if p is None:
-            p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B = theta
-        else:
-            log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B = theta
-
-        if (uppertest and
-            2 < p < 4 and 
-            -3 < log_bG_sh < 3 and 
-            -10 < logMdot < 0 and 
-            -6 < log_epsilon_e < 0 and 
-            -6 < log_epsilon_T < 0 and
-            -6 < log_epsilon_B < 0 and
-            0 <= 10**log_epsilon_e + 10**log_epsilon_B + 10**log_epsilon_T <= 1):
-
+        all_res = []
+        for param, val in self.prior.items():
+            res = val[0] < packed_theta[param] < val[1]
+            all_res.append(res)
+            
+        if (all(all_res) and
+            uppertest and
+            0 <= 10**packed_theta['log_epsilon_e'] + 10**packed_theta['log_epsilon_B'] + 10**packed_theta['log_epsilon_T'] <= 1
+            ):
             return 0.0
         else:
             return -np.inf
-
-    def dynesty_transform(theta, nu, F, upperlimit, p=None, **kwargs):
-        '''
-        Prior transform function for dynesty
-
-        theta is expected to be a 1D array with each value in the range [0,1)
-        so we need to transform each to parameter space
-        '''
-        
-        if p is None:
-            fixed_p = False
-            p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B = theta
-        else:
-            fixed_p = True
-            log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B = theta
-
-        # log_bG_sh should be between -2 and 2
-        log_bG_sh = log_bG_sh*6 - 3
-
-        # -10 < logMdot < 0
-        logMdot*=-10
-
-        # -3 < epsilon_e < 0
-        log_epsilon_e*=-6
-        log_epsilon_B*=-6
-    
-        # -3 < epsilon_T < 0
-        log_epsilon_T*=-6
-        
-        if not fixed_p:
-            # p should be between 2 and 4
-            p = 2*p + 2
-            
-            # p between 2.5 and 3.5, let's be a little more restrictive
-            #p += 2.5
-            
-            return p,log_bG_sh,logMdot,log_epsilon_T,log_epsilon_e, log_epsilon_B
-        return log_bG_sh,logMdot,log_epsilon_T,log_epsilon_e, log_epsilon_B
