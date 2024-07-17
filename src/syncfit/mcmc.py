@@ -65,7 +65,9 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
         model.prior = prior
         
     if set(model.prior.keys()) != set(model.labels):
-        raise ValueError('Prior dictionary keys do not match the labels!')
+        raise ValueError(
+            f'Prior dictionary keys ({model.prior.keys()}) do not match the labels ({model.labels})!'
+        )
         
     # construct the sampler and run it
     # NOTE: I give it the lnprob instead of loglik because there can be some other

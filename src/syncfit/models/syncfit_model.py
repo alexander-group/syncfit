@@ -170,7 +170,6 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         return np.all(F_upperlimits > test_fluxes)
     
     # Some *required* abstract methods
-    @abstractmethod
     def get_labels(self, *args, **kwargs):
         '''
         Describes a list of labels used in the return values of the mcmc chain.
