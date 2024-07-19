@@ -135,11 +135,9 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         '''
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            if self.p is not None:
-                model_result = self.SED(nu, self.p, *theta, **kwargs)
-            else:
-                model_result = self.SED(nu, *theta, **kwargs)
-
+            packed_theta = self.pack_theta(theta, **kwargs)
+            model_result = self.SED(nu, **packed_theta)
+            
         if not np.any(np.isfinite(model_result)):
             ll = -np.inf
         else:    
@@ -151,7 +149,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         return ll
 
     @staticmethod
-    def _is_below_upperlimits(nu, F, upperlimits, theta, model):
+    def _is_below_upperlimits(nu, F, upperlimits, theta, model, **kwargs):
         '''
         Checks that the location of theta is below any upperlimits
         '''
@@ -162,11 +160,9 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         where_upperlimit = np.where(upperlimits)[0]
         F_upperlimits = F[where_upperlimit]
 
-        if self.p is None:
-            test_fluxes = model(nu, *theta)[where_upperlimit]
-        else:
-            test_fluxes = model(nu, self.p, *theta)[where_upperlimit]
-
+        packed_theta = self.pack_theta(theta, **kwargs)
+        test_fluxes = model(nu, **packed_theta)[where_upperlimit]
+        
         return np.all(F_upperlimits > test_fluxes)
     
     # Some *required* abstract methods
@@ -184,18 +180,21 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         '''
         pass
 
-    def pack_theta(self, theta):
+    def pack_theta(self, theta, **kwargs):
         '''
         Pack theta into a dictionary
         '''
-        return {param:theta[idx] for idx, param in enumerate(self.labels)}
+        d = {param:theta[idx] for idx, param in enumerate(self.labels)}
+        for k,v in kwargs.items():
+            d[k] = v
+        return d
     
     def lnprior(self, theta, nu, F, upperlimit, **kwargs):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
         uppertest = SyncfitModel._is_below_upperlimits(
-            nu, F, upperlimit, theta, self.SED
+            nu, F, upperlimit, theta, self.SED, **kwargs
         )
 
         packed_theta = self.pack_theta(theta)

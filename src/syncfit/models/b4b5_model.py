@@ -11,24 +11,27 @@ class B4B5(SyncfitModel):
     subclass this class and overwrite lnprior to redefine this. 
     '''
 
-    def __init__(self, p=None):
+    def __init__(self, prior=None, p=None):
         # then set the default prior for this model
-        if p is None:
-            self.prior = dict(
-                p=[2,4],
-                log_F_nu=[-4,2],
-                log_nu_a=[6,11],
-                log_nu_m=[-np.inf,6]
-            )
+        if prior is None:
+            if p is None:
+                self.prior = dict(
+                    p=[2,4],
+                    log_F_nu=[-4,2],
+                    log_nu_a=[6,11],
+                    log_nu_m=[-np.inf,6]
+                )
+            else:
+                self.prior = dict(
+                    log_F_nu=[-4,2],
+                    log_nu_a=[6,11],
+                    log_nu_m=[-np.inf,6]
+                )
         else:
-            self.prior = dict(
-                log_F_nu=[-4,2],
-                log_nu_a=[6,11],
-                log_nu_m=[-np.inf,6]
-            )
+            self.prior = prior
 
 
-        super().__init__(p=p)
+        super().__init__(self.prior, p=p)
     
     # the model, must be named SED!!!
     def SED(self, nu, p, log_F_nu, log_nu_a, log_nu_m, **kwargs):
@@ -53,7 +56,7 @@ class B4B5(SyncfitModel):
         Logarithmic prior function that can be changed based on the SED model.
         '''
         uppertest = SyncfitModel._is_below_upperlimits(
-            nu, F, upperlimit, theta, self.SED
+            nu, F, upperlimit, theta, self.SED, **kwargs
         )
 
         packed_theta = self.pack_theta(theta)

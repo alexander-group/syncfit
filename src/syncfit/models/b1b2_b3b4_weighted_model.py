@@ -10,21 +10,24 @@ class B1B2_B3B4_Weighted(SyncfitModel):
     the B3B4 model. The idea of this model is from XXXYXYXYX et al. (YYYY).
     '''
 
-    def __init__(self, p=None):
+    def __init__(self, prior=None, p=None):
         # then set the default prior for this model
-        if p is None:
-            self.prior = dict(
-                p=[2,4],
-                log_F_nu=[-4,2],
-                log_nu_a=[6,12],
-                log_nu_m=[6,12]
-            )
+        if prior is None:
+            if p is None:
+                self.prior = dict(
+                    p=[2,4],
+                    log_F_nu=[-4,2],
+                    log_nu_a=[6,12],
+                    log_nu_m=[6,12]
+                )
+            else:
+                self.prior = dict(
+                    log_F_nu=[-4,2],
+                    log_nu_a=[6,12],
+                    log_nu_m=[6,12]
+                )
         else:
-            self.prior = dict(
-                log_F_nu=[-4,2],
-                log_nu_a=[6,12],
-                log_nu_m=[6,12]
-            )
+            self.prior = prior
 
         super().__init__(self.prior, p=p)
             

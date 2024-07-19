@@ -38,8 +38,8 @@ def plot_chains(sampler, labels, fig=None, axes=None):
 
     return fig, axes
 
-def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None,
-                  nu_arr=None, method='random', fig=None, ax=None, day=None):
+def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000,
+                  nu_arr=None, method='random', fig=None, ax=None, day=None, **kwargs):
     '''
     Plot best fit model
 
@@ -62,8 +62,11 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None,
         matplotlib fig, ax
     '''
     if isinstance(model, MQModel) and model.t is not None:
-        t = model.t
-    
+       kwargs['t'] = model.t
+
+    if model.p is not None:
+        kwargs['p'] = model.p
+       
     flat_samples, log_prob = extract_output(sampler)
     
     if method == 'max':
@@ -82,19 +85,10 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000, lum_dist=None,
         
     if ax is None:
         fig, ax = plt.subplots(figsize=(4,4))
-
-    if lum_dist is not None and model.t is None:
-        kwargs = dict(lum_dist=lum_dist)
-    elif lum_dist is not None and model.t is not None:
-        kwargs = dict(lum_dist=lum_dist, t=t)
-    else:
-        kwargs={}
         
     for val in toplot:
-        if model.p is not None:
-            res = model.SED(nu_plot, model.p, *val, **kwargs)
-        else:
-            res = model.SED(nu_plot, *val, **kwargs)
+        packed_theta = model.pack_theta(val, **kwargs)
+        res = model.SED(nu_plot, **packed_theta)
             
         ax.plot(nu_plot, res,
                 '-', color='cornflowerblue', lw = 0.5, alpha = 0.1)

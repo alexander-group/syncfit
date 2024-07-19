@@ -13,27 +13,30 @@ from astropy import constants as c
 
 class MQModel(SyncfitModel):
 
-    def __init__(self, p=None, t=None):
-        # set the default prior for this model
-        self.prior = dict(
-            log_bG_sh=[-3,3],
-            log_Mdot=[-10,0],
-            log_epsilon_e=[-3,0],
-            log_epsilon_B=[-3,0],
-            log_epsilon_T=[-3,0]
-        )
-
-        if p is None:
-            self.prior['p'] = [2,4]
-
-        if t is None:
-            self.prior['t'] = [0.1, 1_000] # super wide prior as default
-
+    def __init__(self, prior=None, p=None, t=None):
+        if prior is None:
+            # set the default prior for this model
+            self.prior = dict(
+                log_bG_sh=[-3,3],
+                log_Mdot=[-10,0],
+                log_epsilon_e=[-3,0],
+                log_epsilon_B=[-3,0],
+                log_epsilon_T=[-3,0]
+            )
+            
+            if p is None:
+                self.prior['p'] = [2,4]
+                
+            if t is None:
+                self.prior['t'] = [0.1, 1_000] # super wide prior as default
+        else:
+            self.prior = prior
+            
         # then initiate the superclass
         super().__init__(self.prior, p=p)
         self.t = t
                                 
-    def SED(self, nu, p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
+    def SED(self, nu, p, log_bG_sh, log_Mdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
             t, lum_dist, **kwargs):       
 
         # set microphysical and geometric parameters
@@ -45,7 +48,7 @@ class MQModel(SyncfitModel):
 
         t = (t*u.day).to(u.s).value
         
-        Mdot_over_vw = (10**logMdot*(c.M_sun/u.yr/1e8)).cgs.value
+        Mdot_over_vw = (10**log_Mdot*(c.M_sun/u.yr/1e8)).cgs.value
 
         Lnu = Lnu_of_nu(
             10**log_bG_sh, Mdot_over_vw, nu, t, p=p, 
@@ -63,10 +66,10 @@ class MQModel(SyncfitModel):
         Logarithmic prior function that can be changed based on the SED model.
         '''
         uppertest = SyncfitModel._is_below_upperlimits(
-            nu, F, upperlimit, theta, self.SED
+            nu, F, upperlimit, theta, self.SED, **kwargs
         )
 
-        packed_theta = self.pack_theta(theta)
+        packed_theta = self.pack_theta(theta, **kwargs)
         
         all_res = []
         for param, val in self.prior.items():
