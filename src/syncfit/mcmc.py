@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import emcee
 import dynesty
 from multiprocessing import Pool
+from warnings import warn
 from .analysis import *
 from .models.mq_model import MQModel
 from .models.syncfit_model import SyncfitModel
@@ -48,11 +49,11 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     test_model = model() # just for now
     if isinstance(test_model, MQModel) and (lum_dist is None):
         raise ValueError('lum_dist and t reequired for MQModel!')
-
+    
     if isinstance(test_model, MQModel):
-        model = model(p=fix_p, t=t)
+        model = model(prior=prior, p=fix_p, t=t)
     else:
-        model = model(p=fix_p)
+        model = model(prior=prior, p=fix_p)
     
     # get the extra args
     dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t)

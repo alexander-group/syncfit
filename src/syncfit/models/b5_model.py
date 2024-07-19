@@ -9,19 +9,22 @@ class B5(SyncfitModel):
     Single break model for just the self-absorption break.
     '''
 
-    def __init__(self, p=None):
+    def __init__(self, prior=None, p=None):
         # then set the default prior for this model
-        if p is None:
-            self.prior = dict(
-                p=[2,4],
-                log_F_nu=[-4,2],
-                log_nu_a=[6,11]
-            )
+        if prior is None:
+            if p is None:
+                self.prior = dict(
+                    p=[2,4],
+                    log_F_nu=[-4,2],
+                    log_nu_a=[6,11]
+                )
+            else:
+                self.prior = dict(
+                    log_F_nu=[-4,2],
+                    log_nu_a=[6,11]
+                )
         else:
-            self.prior = dict(
-                log_F_nu=[-4,2],
-                log_nu_a=[6,11]
-            )
+            self.prior = prior
 
         super().__init__(self.prior, p=p)
         
