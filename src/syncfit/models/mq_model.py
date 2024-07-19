@@ -14,12 +14,7 @@ from astropy import constants as c
 class MQModel(SyncfitModel):
 
     def __init__(self, p=None, t=None):
-        super().__init__(p=p)
-        self.t = t
-        self.labels = self.get_labels(p=p, t=t)
-        self.ndim = len(self.labels)
-        
-        # then set the default prior for this model
+        # set the default prior for this model
         self.prior = dict(
             log_bG_sh=[-3,3],
             log_Mdot=[-10,0],
@@ -33,15 +28,11 @@ class MQModel(SyncfitModel):
 
         if t is None:
             self.prior['t'] = [0.1, 1_000] # super wide prior as default
-            
-    def get_labels(self, p=None, t=None):
-        base_labels = ['log_bG_sh', 'log_Mdot', 'log_epsilon_T', 'log_epsilon_e', 'log_epsilon_B']
-        if p is None:
-            base_labels = ['p'] + base_labels
-        if t is None:
-            base_labels.append('t')
-        return base_labels
-            
+
+        # then initiate the superclass
+        super().__init__(self.prior, p=p)
+        self.t = t
+                                
     def SED(self, nu, p, log_bG_sh, logMdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
             t, lum_dist, **kwargs):       
 

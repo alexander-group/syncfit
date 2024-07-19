@@ -11,8 +11,6 @@ class B4B5B3(SyncfitModel):
     '''
 
     def __init__(self, p=None):
-        super().__init__(p=p)
-
         # then set the default prior for this model
         if p is None:
             self.prior = dict(
@@ -29,13 +27,9 @@ class B4B5B3(SyncfitModel):
                 log_nu_m=[0, 6],
                 log_nu_c=[7,15]
             )
-    
-    def get_labels(self, p=None):
-        if p is None:
-            return ['p','log_F_nu', 'log_nu_a','log_nu_m', 'log_nu_c']
-        else:
-            return ['log_F_nu', 'log_nu_a','log_nu_m', 'log_nu_c']
 
+        super().__init__(self.prior, p=p)
+            
     # the model, must be named SED!!!
     def SED(self, nu, p, log_F_nu, log_nu_a, log_nu_m, log_nu_c, **kwargs):
         b1 = 2

@@ -26,10 +26,10 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
     while also allowing users to customize their own.
     '''
 
-    def __init__(self, p=None):
+    def __init__(self, prior, p=None):
+        self.prior = prior
         self.labels = self.get_labels(p=p)
         self.ndim = len(self.labels)
-        self.prior = None
         self.p = p
         
     # Write some getters for things that are model specific
@@ -175,7 +175,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         Describes a list of labels used in the return values of the mcmc chain.
         This varies depending on the inputs to the MCMC.
         '''
-        pass
+        return list(self.prior.keys())
         
     @abstractmethod
     def SED(self, *args, **kwargs):
