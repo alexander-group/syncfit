@@ -61,12 +61,12 @@ class MQModel(SyncfitModel):
 
         return Fnu.value
 
-    def lnprior(self, theta, nu, F, upperlimit, **kwargs):
+    def lnprior(self, theta, nu, F, upperlimits, **kwargs):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
-        uppertest = SyncfitModel._is_below_upperlimits(
-            nu, F, upperlimit, theta, self.SED, **kwargs
+        uppertest = self._is_below_upperlimits(
+            nu, F, upperlimits, theta, self.SED, **kwargs
         )
 
         packed_theta = self.pack_theta(theta, **kwargs)

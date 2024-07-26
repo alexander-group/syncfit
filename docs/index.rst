@@ -7,7 +7,11 @@ Welcome to syncfit's documentation!
 ===================================
 
 The :code:`syncfit` module allows users to model synchrotron emission spectral energy distributions to
-extract properties about the system.
+extract properties about the system. This uses the SED models from the following sources:
+* `mq_model.py` : Margalit & Quataert (2024) at https://ui.adsabs.harvard.edu/abs/2002ApJ...568..820G/abstract
+* all other models : Granot & Sari (2002) at https://ui.adsabs.harvard.edu/abs/2002ApJ...568..820G/abstract
+If you use this code, you should be citing them!
+
 
 .. include:: installation.rst
 

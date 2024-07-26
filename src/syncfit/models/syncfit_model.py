@@ -59,7 +59,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
 
     @staticmethod
     def get_kwargs(nu:list, F_mJy:list, F_error:list, lum_dist:float=None,
-                       t:float=None, upperlimit:list=None) -> dict:
+                       t:float=None, upperlimits:list=None) -> dict:
         '''
         Packages up the args to be passed into the model based on the user input.
 
@@ -76,7 +76,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         F = np.array(F_mJy).astype(float)
         F_error = np.array(F_error)
 
-        base_args = {'nu':nu, 'F':F, 'F_error':F_error, 'upperlimit':upperlimit} 
+        base_args = {'nu':nu, 'F':F, 'F_error':F_error, 'upperlimits':upperlimits} 
         
         if lum_dist is not None:
             base_args['lum_dist'] = lum_dist
@@ -88,7 +88,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
 
     # package those up for easy getting in do_emcee
     def unpack_util(self, theta_init, nu, F_mJy, F_error, nwalkers, lum_dist=None,
-                    t=None, upperlimit=None):
+                    t=None, upperlimits=None):
         '''
         A wrapper on the utility functions.
 
@@ -102,7 +102,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         '''
         return (self.get_pos(theta_init,nwalkers),
                 self.get_labels(p=self.p),
-                self.get_kwargs(nu, F_mJy, F_error, upperlimit))
+                self.get_kwargs(nu, F_mJy, F_error, upperlimits))
 
     def lnprob(self, theta:list, **kwargs):
         '''Keep or throw away step likelihood and priors
@@ -120,7 +120,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         else:
             return lp + self.loglik(theta, **kwargs)
 
-    def loglik(self, theta, nu, F, F_error, **kwargs):
+    def loglik(self, theta, nu, F, F_error, upperlimits, **kwargs):
         '''Log Likelihood function
 
         Args:
@@ -133,23 +133,28 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         Returns:
             The logarithmic likelihood of that theta position
         '''
+        # array where the points are to filter out the upperlimits
+        if upperlimits is None:
+            where_point = np.where([True]*len(F))[0]
+        else:
+            where_point = np.where(~np.array(upperlimits))[0]
+        
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             packed_theta = self.pack_theta(theta, **kwargs)
-            model_result = self.SED(nu, **packed_theta)
+            model_result = self.SED(nu[where_point], **packed_theta)
             
         if not np.any(np.isfinite(model_result)):
             ll = -np.inf
         else:    
-            sigma2 = F_error**2
+            sigma2 = F_error[where_point]**2
         
-            chi2 = np.sum((F - model_result)**2/sigma2)
+            chi2 = np.sum((F[where_point] - model_result)**2/sigma2)
             ll = -0.5*chi2
         
         return ll
 
-    @staticmethod
-    def _is_below_upperlimits(nu, F, upperlimits, theta, model, **kwargs):
+    def _is_below_upperlimits(self, nu, F, upperlimits, theta, model, **kwargs):
         '''
         Checks that the location of theta is below any upperlimits
         '''
@@ -160,8 +165,10 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         where_upperlimit = np.where(upperlimits)[0]
         F_upperlimits = F[where_upperlimit]
 
-        packed_theta = self.pack_theta(theta, **kwargs)
-        test_fluxes = model(nu, **packed_theta)[where_upperlimit]
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            packed_theta = self.pack_theta(theta, **kwargs)
+            test_fluxes = model(nu[where_upperlimit], **packed_theta)
         
         return np.all(F_upperlimits > test_fluxes)
     
@@ -193,7 +200,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
-        uppertest = SyncfitModel._is_below_upperlimits(
+        uppertest = self._is_below_upperlimits(
             nu, F, upperlimit, theta, self.SED, **kwargs
         )
 
