@@ -45,6 +45,18 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     Returns:
         flat_samples, log_prob
     """
+    if not isinstance(upperlimits, np.ndarray):
+        upperlimits = np.array(upperlimits)
+
+    if not isinstance(nu, np.ndarray):
+        nu = np.array(nu)
+
+    if not isinstance(F_mJy, np.ndarray):
+        F_mJy = np.array(F_mJy)
+
+    if not isinstance(F_error, np.ndarray):
+        F_error = np.array(F_error)
+        
     # instantiate a new model object
     test_model = model() # just for now
     if isinstance(test_model, MQModel) and (lum_dist is None):
@@ -56,7 +68,7 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
         model = model(prior=prior, p=fix_p)
     
     # get the extra args
-    dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t)
+    dynesty_args = model.get_kwargs(nu, F_mJy, F_error, lum_dist=lum_dist, t=t, upperlimits=upperlimits)
 
     # combine these with the logprob_kwargs
     # make the logprob_kwargs second so it overwrites anything we set here
