@@ -37,14 +37,10 @@ class MQModel(SyncfitModel):
         self.t = t
                                 
     def SED(self, nu, p, log_bG_sh, log_Mdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
-            t, lum_dist, **kwargs):       
+            t, lum_dist, ell_dec = 1.0, f = 3.0/16.0, **kwargs):       
 
         # set microphysical and geometric parameters
-        # log_epsilon_e = -1
-        # log_epsilon_B = log_epsilon_e # assume equipartition
         delta = 10**log_epsilon_e/10**log_epsilon_T
-        f = 3.0/16.0
-        ell_dec = 1.0
 
         t = (t*u.day).to(u.s).value
         
@@ -53,7 +49,7 @@ class MQModel(SyncfitModel):
         Lnu = Lnu_of_nu(
             10**log_bG_sh, Mdot_over_vw, nu, t, p=p, 
             epsilon_T=10**log_epsilon_T, epsilon_B=10**log_epsilon_B, epsilon_e=10**log_epsilon_e,
-            f=f,ell_dec=ell_dec,radius_insteadof_time=False
+            f=f,ell_dec=ell_dec, **kwargs
         ) * u.erg / (u.s * u.Hz)
 
         lum_dist_cm = lum_dist*u.cm # give it units so the conversion works well
