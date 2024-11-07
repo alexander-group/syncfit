@@ -196,12 +196,12 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
             d[k] = v
         return d
     
-    def lnprior(self, theta, nu, F, upperlimit, **kwargs):
+    def lnprior(self, theta, nu, F, upperlimits, **kwargs):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
         uppertest = self._is_below_upperlimits(
-            nu, F, upperlimit, theta, self.SED, **kwargs
+            nu, F, upperlimits, theta, self.SED, **kwargs
         )
 
         packed_theta = self.pack_theta(theta)
