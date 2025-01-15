@@ -143,7 +143,7 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
             warnings.simplefilter('ignore')
             packed_theta = self.pack_theta(theta, **kwargs)
             model_result = self.SED(nu[where_point], **packed_theta)
-            
+        
         if not np.any(np.isfinite(model_result)):
             ll = -np.inf
         else:    
@@ -200,22 +200,25 @@ class SyncfitModel(object, metaclass=_SyncfitModelMeta):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
-        uppertest = self._is_below_upperlimits(
+        res = self._is_below_upperlimits(
             nu, F, upperlimits, theta, self.SED, **kwargs
         )
 
         packed_theta = self.pack_theta(theta)
-        
-        all_res = []
+
+        # note that by multiplying the priors together we are ASSUMING that the priors
+        # are independent of eachother
         for param, val in self.prior.items():
-            res = val[0] < packed_theta[param] < val[1]
-            all_res.append(res)
-
-        if all(all_res) and uppertest:
-            return 0.0
-        else:
+            if callable(val):
+                res *= val(packed_theta[param])
+            else:
+                res *= val[0] < packed_theta[param] < val[1]
+            
+        if res <= 0:
             return -np.inf
-
+        else:
+            return res
+            
     def _transform_dynesty_transform(self, param, val):
         '''
         Subfunction for transforming the dynesty inputs to the correct prior range
