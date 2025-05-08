@@ -19,7 +19,8 @@ class _SyncfitModelMeta(type):
                 member.__doc__ = getattr(bases[-1], name).__doc__
         return cls
 
-class SyncfitModel(object, metaclass=_SyncfitModelMeta):
+#class SyncfitModel(object, metaclass=_SyncfitModelMeta):
+class SyncfitModel(object):
     '''
     An Abstract Base Class to define the basic methods that all syncfit
     models must contain. This will help maintain some level of standard for the models

@@ -38,8 +38,8 @@ class B5B3(SyncfitModel):
         b2 = (1-p)/2
         b3 = -p/2
 
-        s12 = 0.8-0.03*p
-        s23 = 1.15-0.06*p
+        s12 = 1.25-0.18*p
+        s23 = 0.8-0.03*p
 
         F_nu = 10**log_F_nu
         nu_c = 10**log_nu_c
