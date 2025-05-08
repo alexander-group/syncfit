@@ -33,7 +33,8 @@ dependencies = [
   "scipy",
   "astropy",
   "emcee",
-  "dynesty"
+  "dynesty",
+  "multiprocess" # this is so the pool objects use dill for pickling instead of pickle
   ]
 
 [project.optional-dependencies]

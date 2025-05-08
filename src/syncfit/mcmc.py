@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import emcee
 import dynesty
-from multiprocessing import Pool
+from multiprocess import Pool
 from warnings import warn
 from .analysis import *
 from .models.mq_model import MQModel
@@ -73,6 +73,9 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     # combine these with the logprob_kwargs
     # make the logprob_kwargs second so it overwrites anything we set here
     dynesty_args = dynesty_args | logprob_kwargs
+
+    if fix_p is not None:
+        dynesty_args['p'] = fix_p
     
     ndim = model.ndim
     rstate = np.random.default_rng(seed)
@@ -137,11 +140,17 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
     Returns:
         flat_samples, log_prob
     """
-    # instantiate a new model object
-    model = model(p=fix_p)
-    
     if isinstance(model, MQModel) and (lum_dist is None or t is None):
         raise ValueError('lum_dist and t reequired for MQModel!')
+
+    test_model = model() # just for now
+    if isinstance(test_model, MQModel) and (lum_dist is None):
+        raise ValueError('lum_dist and t reequired for MQModel!')
+    
+    if isinstance(test_model, MQModel):
+        model = model(prior=prior, p=fix_p, t=t)
+    else:
+        model = model(prior=prior, p=fix_p)
     
     ### Fill in initial guesses and number of parameters  
     theta_init = np.array(theta_init)
@@ -156,7 +165,10 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
         
     pos, labels, emcee_args = model.unpack_util(theta_init, nu, F_mJy, F_error,
                                                 nwalkers, lum_dist=lum_dist,
-                                                t=t, upperlimit=upperlimits)
+                                                t=t, upperlimits=upperlimits)
+
+    if fix_p is not None:
+        emcee_args['p'] = fix_p
     
     # setup and run the MCMC
     nwalkers, ndim = pos.shape
