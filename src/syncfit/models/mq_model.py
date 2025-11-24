@@ -57,7 +57,7 @@ class MQModel(SyncfitModel):
 
         return Fnu.value
 
-    def lnprior(self, theta, nu, F, upperlimits, **kwargs):
+    def lnprior(self, theta, nu, F, F_error, upperlimits, **kwargs):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
