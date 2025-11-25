@@ -45,7 +45,7 @@ def do_dynesty(nu:list[float], F_mJy:list[float], F_error:list[float],
     Returns:
         flat_samples, log_prob
     """
-    if not isinstance(upperlimits, np.ndarray):
+    if not isinstance(upperlimits, np.ndarray) and upperlimits is not None:
         upperlimits = np.array(upperlimits)
 
     if not isinstance(nu, np.ndarray):

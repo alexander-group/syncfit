@@ -139,12 +139,12 @@ class SyncfitModel(object):
             where_point = np.where([True]*len(F))[0]
         else:
             where_point = np.where(~np.array(upperlimits))[0]
-        
+
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             packed_theta = self.pack_theta(theta, **kwargs)
             model_result = self.SED(nu[where_point], **packed_theta)
-        
+            
         if not np.any(np.isfinite(model_result)):
             ll = -np.inf
         else:    
@@ -152,7 +152,7 @@ class SyncfitModel(object):
         
             chi2 = np.sum((F[where_point] - model_result)**2/sigma2)
             ll = -0.5*chi2
-        
+
         return ll
 
     def _is_below_upperlimits(self, nu, F, upperlimits, theta, model, **kwargs):

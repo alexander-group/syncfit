@@ -44,7 +44,7 @@ class MQModel(SyncfitModel):
 
         t = (t*u.day).to(u.s).value
         
-        Mdot_over_vw = (10**log_Mdot*(c.M_sun/u.yr/1e8)).cgs.value
+        Mdot_over_vw = (10**log_Mdot*(c.M_sun/u.yr)).cgs.value
 
         Lnu = Lnu_of_nu(
             10**log_bG_sh, Mdot_over_vw, nu, t, p=p, 
@@ -61,9 +61,11 @@ class MQModel(SyncfitModel):
         '''
         Logarithmic prior function that can be changed based on the SED model.
         '''
-        uppertest = self._is_below_upperlimits(
-            nu, F, upperlimits, theta, self.SED, **kwargs
-        )
+        uppertest = True
+        if upperlimits:
+            uppertest = self._is_below_upperlimits(
+                nu, F, upperlimits, theta, self.SED, **kwargs
+            )
 
         packed_theta = self.pack_theta(theta, **kwargs)
         
