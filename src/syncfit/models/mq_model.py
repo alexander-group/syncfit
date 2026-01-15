@@ -7,9 +7,10 @@ Quataert (2024) paper.
 
 import numpy as np
 from .syncfit_model import SyncfitModel
-from .thermal_util import Lnu_of_nu
+from .thermal_util import Fnu_of_nu
 from astropy import units as u
 from astropy import constants as c
+from astropy.cosmology import Planck18 as cosmo
 
 class MQModel(SyncfitModel):
 
@@ -36,24 +37,24 @@ class MQModel(SyncfitModel):
         super().__init__(self.prior, p=p)
         self.t = t
                                 
-    def SED(self, nu, p, log_bG_sh, log_Mdot, log_epsilon_T, log_epsilon_e, log_epsilon_B,
-            t, lum_dist, ell_dec = 1.0, f = 3.0/16.0, **kwargs):       
+    def SED(self, nu, p, log_bG_sh, log_n, log_epsilon_T, log_epsilon_e, log_epsilon_B,
+            t, z, ell_dec = 1.0, f = 3.0/16.0, **kwargs):       
 
         # set microphysical and geometric parameters
         delta = 10**log_epsilon_e/10**log_epsilon_T
 
         t = (t*u.day).to(u.s).value
         
-        Mdot_over_vw = (10**log_Mdot*(c.M_sun/u.yr)).cgs.value
+        Mdot_over_vw = 10**log_n # this "log_n" is really the log density parameter since we set density_insteadof_massloss=True!
 
-        Lnu = Lnu_of_nu(
+        lum_dist = cosmo.luminosity_distance(z).cgs.value
+        Fnu = Fnu_of_nu(
             10**log_bG_sh, Mdot_over_vw, nu, t, p=p, 
             epsilon_T=10**log_epsilon_T, epsilon_B=10**log_epsilon_B, epsilon_e=10**log_epsilon_e,
-            f=f,ell_dec=ell_dec, **kwargs
-        ) * u.erg / (u.s * u.Hz)
+            f=f,ell_dec=ell_dec, Dlum=lum_dist, z=z, density_insteadof_massloss=True, **kwargs
+        ) * u.erg / (u.cm**2 * u.s * u.Hz)
 
-        lum_dist_cm = lum_dist*u.cm # give it units so the conversion works well
-        Fnu = (Lnu / (4*np.pi*(lum_dist_cm)**2)).to(u.mJy) # mJy
+        Fnu = Fnu.to(u.mJy) # mJy
 
         return Fnu.value
 

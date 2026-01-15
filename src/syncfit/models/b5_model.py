@@ -32,7 +32,7 @@ class B5(SyncfitModel):
     def SED(self, nu, p, log_F_nu, log_nu_a, **kwargs):
         b1 = 5/2
         b2 = (1-p)/2
-        s = 1.25-0.18*p
+        s = 1 #1.25-0.18*p
 
         F_nu = 10**log_F_nu
         nu_a = 10**log_nu_a

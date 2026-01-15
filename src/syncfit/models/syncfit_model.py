@@ -149,8 +149,7 @@ class SyncfitModel(object):
             ll = -np.inf
         else:    
             sigma2 = F_error[where_point]**2
-        
-            chi2 = np.sum((F[where_point] - model_result)**2/sigma2)
+            chi2 = np.sum((F[where_point] - model_result[where_point])**2/sigma2 + np.log(sigma2))
             ll = -0.5*chi2
 
         return ll
@@ -239,12 +238,13 @@ class SyncfitModel(object):
             return param*diff + linear_shift
 
         elif val[0] < 0 and val[1] > 0:
-            linear_shift = val[1]
-            return param*diff - linear_shift
+            linear_shift = val[0]
+            return param*diff + linear_shift
 
-        elif val[0] < 0 and val[0] < 0:
-            linear_shift = abs(max(val))
-            return -param*diff - linear_shift
+
+        elif val[0] < 0 and val[1] < 0:
+            linear_shift = abs(min(val))
+            return param*diff - linear_shift
 
         else:
             raise ValueError('This is a prior range we had not considered!')

@@ -82,24 +82,25 @@ def plot_best_fit(model, sampler, nu, F, Ferr, nkeep=1000,
         nu_plot = np.arange(1e8,3e11,1e7)
     else:
         nu_plot = nu_arr
-        
+
     if ax is None:
         fig, ax = plt.subplots(figsize=(4,4))
         
     for val in toplot:
         packed_theta = model.pack_theta(val, **kwargs)
+
         res = model.SED(nu_plot, **packed_theta)
-            
         ax.plot(nu_plot, res,
                 '-', color='cornflowerblue', lw = 0.5, alpha = 0.1)
         
     ax.errorbar(nu, F, yerr=Ferr, fmt='o', markerfacecolor='none', markeredgecolor='k')
-
+    
     if day is not None:
         ax.text(1.25e9,2e-2,s='Day '+ day, fontsize = 20)
 
     ax.set_yscale('log')
     ax.set_xscale('log')
+    ax.set_xlim(nu_plot.min(), nu_plot.max())
     plt.show()
 
     return fig, ax

@@ -769,11 +769,11 @@ def Fnu_of_nu( bG_sh, Mdot_over_vw, nu, t, Dlum=1e26, z=0.0, density_insteadof_m
     '''
 
     # correct observer time and frequency for cosmological redshift
-    t *= (1.0+z)
-    nu *= 1.0/(1.0+z)
+    t_zcorr = t*(1.0+z) # z corrected t 
+    nu_zcorr = nu/(1.0+z) # z corrected nu
 
     # calculate (isotropic-equivalent) specific luminosity
-    Lnu = Lnu_of_nu( bG_sh, Mdot_over_vw, nu, t, density_insteadof_massloss=density_insteadof_massloss,
+    Lnu = Lnu_of_nu( bG_sh, Mdot_over_vw, nu_zcorr, t_zcorr, density_insteadof_massloss=density_insteadof_massloss,
                     radius_insteadof_time=radius_insteadof_time, pure_powerlaw_gamma_m=pure_powerlaw_gamma_m,include_syn_cooling=include_syn_cooling,
                     epsilon_T=epsilon_T,epsilon_B=epsilon_B,epsilon_e=epsilon_e,p=p,f=f,ell_dec=ell_dec,mu=mu,mu_e=mu_e)
 
