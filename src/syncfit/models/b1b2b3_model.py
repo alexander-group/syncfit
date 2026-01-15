@@ -34,7 +34,7 @@ class B1B2B3(SyncfitModel):
         super().__init__(self.prior, p=p)
                     
     # the model, must be named SED!!!
-    def SED(self, nu, p, log_F_nu, log_nu_a, log_nu_m, **kwargs):
+    def SED(self, nu, p, log_F_nu, log_nu_a, log_nu_m, log_nu_c, **kwargs):
         b1 = 2
         b2 = 1/3
         b3 = (1-p)/2
