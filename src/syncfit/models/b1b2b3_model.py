@@ -42,7 +42,7 @@ class B1B2B3(SyncfitModel):
     
         s1 = 1.06
         s2 = 1.76-0.38*p
-		s3 = 10
+	s3 = 10
 		
         F_nu = 10**log_F_nu
         nu_m = 10**log_nu_m
