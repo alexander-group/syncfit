@@ -72,7 +72,7 @@ class B1B2B3(SyncfitModel):
             
         if (all(all_res) and
             uppertest and
-            packed_theta['log_nu_c'] > packed_theta['log_nu_a'] and
+            packed_theta['log_nu_c'] > packed_theta['log_nu_m'] and
             packed_theta['log_nu_m'] > packed_theta['log_nu_a']
             ):
             return 0.0
