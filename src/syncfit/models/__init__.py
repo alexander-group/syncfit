@@ -1,5 +1,5 @@
 from syncfit.models.b5_model import B5
-from syncfit.models.b5_model import B1B2B3
+from syncfit.models.b1b2b3_model import B1B2B3
 from syncfit.models.b4b5_model import B4B5
 from syncfit.models.b4b5b3_model import B4B5B3
 from syncfit.models.b1b2_model import B1B2
