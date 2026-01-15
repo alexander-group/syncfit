@@ -50,7 +50,7 @@ class B1B2B3(SyncfitModel):
         nu_c = 10**log_nu_c
 
         term1 = ( (nu/nu_a)**(-s1*b1) + (nu/nu_a)**(-s1*b2) )**(-1/s1)
-        term2 = ( 1 + (nu/nu_a)**(s2*(b2-b3)) )**(-1/s2)
+        term2 = ( 1 + (nu/nu_m)**(s2*(b2-b3)) )**(-1/s2)
         term3 = ( 1 + (nu/nu_c)**(s3*(b3-b4)) )**(-1/s3)
 
         return F_nu * term1 * term2 * term3
