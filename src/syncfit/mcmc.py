@@ -115,7 +115,8 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
              F_error:list[float], lum_dist:float=None, t:float=None,
              model:SyncfitModel=SyncfitModel, niter:int=2000,
              nwalkers:int=100, fix_p:float=None, upperlimits:list[bool]=None,
-             day:str=None, plot:bool=False, ncores:int=1, prior=None
+             day:str=None, plot:bool=False, ncores:int=1, prior=None,
+             logprob_kwargs:dict={}
              ) -> tuple[list[float],list[float]]:
     """
     Fit the data with the given model using the emcee package.
@@ -166,9 +167,11 @@ def do_emcee(theta_init:list[float], nu:list[float], F_mJy:list[float],
     pos, labels, emcee_args = model.unpack_util(theta_init, nu, F_mJy, F_error,
                                                 nwalkers, lum_dist=lum_dist,
                                                 t=t, upperlimits=upperlimits)
-
+    
     if fix_p is not None:
         emcee_args['p'] = fix_p
+
+    emcee_args |= logprob_kwargs
     
     # setup and run the MCMC
     nwalkers, ndim = pos.shape
