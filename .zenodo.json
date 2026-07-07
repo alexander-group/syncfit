@@ -1,0 +1,21 @@
+{
+  "title": "syncfit: Synchrotron Modeling Code",
+  "description": "Code for fitting radio SEDs with broken powerlaws.",
+  "creators": [
+    {
+      "name": "Noah Franz",
+      "affiliation": "University of Arizona"
+    },
+    {
+      "name": "Collin T. Christy",
+      "affiliation": "University of Arizona"
+    },
+    {
+      "name": "Kate D. Alexander",
+      "affiliation": "University of Arizona"
+    } 
+  ],
+  "license": "MIT",
+  "upload_type": "software",
+  "access_right": "open"
+}
